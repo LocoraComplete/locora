@@ -1,12 +1,12 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import {
-    Image,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function ProfileSetup() {
@@ -21,8 +21,8 @@ export default function ProfileSetup() {
       {/* Profile Picture Placeholder */}
       <View style={styles.avatarContainer}>
         <Image
-          source={require("../../assets/profile-placeholder.png")}
-          style={styles.avatar}
+            source={require("../../assets/images/test.png")}
+            style={styles.avatar}
         />
         <Text style={styles.changePhoto}>Add Profile Photo</Text>
       </View>
