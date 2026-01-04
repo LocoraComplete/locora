@@ -7,7 +7,7 @@ export default function Index() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.replace("/login"); // Navigate to login after splash
+      router.replace("/(auth)/login");
     }, 2500);
 
     return () => clearTimeout(timer);
@@ -16,7 +16,7 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/splash-icon.png")}
+        source={require("../assets/images/splash-icon.png")}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -27,8 +27,26 @@ export default function Index() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF", justifyContent: "center", alignItems: "center" },
-  logo: { width: 180, height: 180, marginBottom: 24 },
-  title: { fontSize: 36, fontWeight: "700", color: "#000", letterSpacing: 1 },
-  subtitle: { marginTop: 10, fontSize: 16, color: "#666" },
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logo: {
+    width: 180,
+    height: 180,
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: "700",
+    color: "#000000",
+    letterSpacing: 1,
+  },
+  subtitle: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#666666",
+  },
 });

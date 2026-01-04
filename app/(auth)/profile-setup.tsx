@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Image,
   StyleSheet,
@@ -9,44 +9,50 @@ import {
   View,
 } from "react-native";
 
-export default function ProfileSetup() {
+export default function ProfileSetupScreen() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
+
+  const [name, setName] = useState("");
+  const [location, setLocation] = useState("");
+
+  const handleContinue = () => {
+    if (!name || !location) return;
+
+    // Go to Explore tab after setup
+    router.replace("/(tabs)/explore");
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Set Up Your Profile</Text>
+      <Text style={styles.title}>Set up your profile</Text>
 
-      {/* Profile Picture Placeholder */}
-      <View style={styles.avatarContainer}>
+      {/* Profile Image */}
+      <View style={styles.avatarWrapper}>
         <Image
-            source={require("../../assets/images/test.png")}
-            style={styles.avatar}
+          source={require("@/assets/images/test.png")}
+          style={styles.avatar}
         />
-        <Text style={styles.changePhoto}>Add Profile Photo</Text>
       </View>
 
+      {/* Name Input */}
       <TextInput
+        placeholder="Your name"
+        value={name}
+        onChangeText={setName}
         style={styles.input}
-        placeholder="Username"
-        value={username}
-        onChangeText={setUsername}
       />
 
+      {/* Location Input */}
       <TextInput
-        style={[styles.input, styles.bioInput]}
-        placeholder="Bio"
-        multiline
-        value={bio}
-        onChangeText={setBio}
+        placeholder="Your city"
+        value={location}
+        onChangeText={setLocation}
+        style={styles.input}
       />
 
-      <TouchableOpacity
-        style={styles.continueButton}
-        onPress={() => router.replace("/(tabs)/explore")}
-      >
-        <Text style={styles.continueText}>Continue</Text>
+      {/* Continue Button */}
+      <TouchableOpacity style={styles.button} onPress={handleContinue}>
+        <Text style={styles.buttonText}>Continue</Text>
       </TouchableOpacity>
     </View>
   );
@@ -55,52 +61,43 @@ export default function ProfileSetup() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     padding: 24,
     justifyContent: "center",
+    backgroundColor: "#FFFFFF",
   },
   title: {
     fontSize: 26,
-    fontWeight: "700",
+    fontWeight: "600",
     textAlign: "center",
-    marginBottom: 30,
+    marginBottom: 24,
   },
-  avatarContainer: {
+  avatarWrapper: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 24,
   },
   avatar: {
     width: 110,
     height: 110,
     borderRadius: 55,
-    backgroundColor: "#E5E5E5",
-    marginBottom: 10,
-  },
-  changePhoto: {
-    color: "#007AFF",
-    fontSize: 15,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#CCCCCC",
+    borderColor: "#DDD",
     borderRadius: 10,
     padding: 14,
+    fontSize: 16,
     marginBottom: 16,
   },
-  bioInput: {
-    height: 90,
-    textAlignVertical: "top",
-  },
-  continueButton: {
+  button: {
     backgroundColor: "#000000",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 10,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 8,
   },
-  continueText: {
+  buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "600",
+    fontWeight: "500",
+    textAlign: "center",
   },
 });

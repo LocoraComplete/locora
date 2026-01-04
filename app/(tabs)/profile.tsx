@@ -13,7 +13,7 @@ export default function Profile() {
       {/* Profile Info */}
       <View style={styles.profileSection}>
         <Image
-          source={require("../../assets/images/profile-placeholder.png")}
+          source={require("../../assets/images/test.png")}
           style={styles.avatar}
         />
         <Text style={styles.name}>Kashish Chawla</Text>
