@@ -13,14 +13,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-// Update this with your backend IP and port
-const API_BASE_URL = "http://10.68.184.72:5000/api";
+import { API_BASE_URL } from "../../../config/api";
 
 export default function ExploreScreen() {
   const router = useRouter();
   const [searchText, setSearchText] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<"places" | "events" | "food">("places");
+  const [selectedCategory, setSelectedCategory] =
+    useState<"places" | "events" | "food">("places");
 
   const [places, setPlaces] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
@@ -28,32 +27,34 @@ export default function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Fetch data from backend
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError("");
 
-      const placesRes = await axios.get(`${API_BASE_URL}/places`);
-      setPlaces(placesRes.data);
+        const [placesRes, eventsRes, foodRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/places`, { timeout: 8000 }),
+          axios.get(`${API_BASE_URL}/events`, { timeout: 8000 }),
+          axios.get(`${API_BASE_URL}/food`, { timeout: 8000 }),
+        ]);
 
-      const eventsRes = await axios.get(`${API_BASE_URL}/events`);
-      setEvents(eventsRes.data);
+        setPlaces(Array.isArray(placesRes.data) ? placesRes.data : []);
+        setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
+        setFood(Array.isArray(foodRes.data) ? foodRes.data : []);
+      } catch (err: any) {
+        console.error(
+          "Explore API Error:",
+          err?.response?.data || err.message
+        );
+        setError("Failed to load data. Check backend connection.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      const foodRes = await axios.get(`${API_BASE_URL}/food`);
-      setFood(foodRes.data);
-
-
-      setLoading(false);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-      setError("Failed to load data. Please try again.");
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
 
   const handleSearch = () => {
     if (searchText.trim().toLowerCase() === "jaipur") {
@@ -73,7 +74,6 @@ export default function ExploreScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
       <ScrollView style={styles.container}>
-        {/* Search Bar */}
         <TextInput
           placeholder="Search locations..."
           placeholderTextColor="#777"
@@ -84,41 +84,37 @@ export default function ExploreScreen() {
           returnKeyType="search"
         />
 
-        {/* Category Boxes */}
         <View style={styles.categoryContainer}>
-          <TouchableOpacity
-            style={[styles.categoryBox, selectedCategory === "places" && styles.categoryBoxSelected]}
-            onPress={() => setSelectedCategory("places")}
-          >
-            <Text style={styles.categoryText}>PLACES</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.categoryBox, selectedCategory === "events" && styles.categoryBoxSelected]}
-            onPress={() => setSelectedCategory("events")}
-          >
-            <Text style={styles.categoryText}>EVENTS</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.categoryBox, selectedCategory === "food" && styles.categoryBoxSelected]}
-            onPress={() => setSelectedCategory("food")}
-          >
-            <Text style={styles.categoryText}>FOOD</Text>
-          </TouchableOpacity>
+          {["places", "events", "food"].map((cat) => (
+            <TouchableOpacity
+              key={cat}
+              style={[
+                styles.categoryBox,
+                selectedCategory === cat && styles.categoryBoxSelected,
+              ]}
+              onPress={() => setSelectedCategory(cat as any)}
+            >
+              <Text style={styles.categoryText}>{cat.toUpperCase()}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* Recommendations */}
         <Text style={styles.sectionTitle}>
           Recommended {selectedCategory.toUpperCase()}
         </Text>
 
-        {/* Loading state */}
-        {loading && <ActivityIndicator size="large" color="#FF5A5F" style={{ marginVertical: 20 }} />}
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color="#FF5A5F"
+            style={{ marginVertical: 20 }}
+          />
+        )}
 
-        {/* Error state */}
-        {error ? (
-          <Text style={{ color: "red", textAlign: "center", marginVertical: 20 }}>{error}</Text>
+        {!loading && error ? (
+          <Text style={{ color: "red", textAlign: "center", marginVertical: 20 }}>
+            {error}
+          </Text>
         ) : (
           getCategoryData().map((item) => (
             <View key={item._id || item.id} style={styles.postCard}>
@@ -132,7 +128,9 @@ export default function ExploreScreen() {
               />
               <View style={styles.postContent}>
                 <Text style={styles.postTitle}>{item.Name}</Text>
-                <Text style={styles.postDescription}>{item.Description}</Text>
+                <Text style={styles.postDescription}>
+                  {item.Description}
+                </Text>
               </View>
             </View>
           ))
