@@ -1,112 +1,200 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import axios from "axios";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+// Update this with your backend IP and port
+const API_BASE_URL = "http://10.68.184.72:5000/api";
 
-export default function TabTwoScreen() {
+export default function ExploreScreen() {
+  const router = useRouter();
+  const [searchText, setSearchText] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<"places" | "events" | "food">("places");
+
+  const [places, setPlaces] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [food, setFood] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Fetch data from backend
+  useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+
+      const placesRes = await axios.get(`${API_BASE_URL}/places`);
+      setPlaces(placesRes.data);
+
+      const eventsRes = await axios.get(`${API_BASE_URL}/events`);
+      setEvents(eventsRes.data);
+
+      const foodRes = await axios.get(`${API_BASE_URL}/food`);
+      setFood(foodRes.data);
+
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Failed to load data. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, []);
+
+  const handleSearch = () => {
+    if (searchText.trim().toLowerCase() === "jaipur") {
+      router.push("/explore/jaipur");
+    } else {
+      Alert.alert("Not found", "Try typing 'Jaipur'");
+    }
+  };
+
+  const getCategoryData = () => {
+    if (selectedCategory === "places") return places;
+    if (selectedCategory === "events") return events;
+    if (selectedCategory === "food") return food;
+    return [];
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+      <ScrollView style={styles.container}>
+        {/* Search Bar */}
+        <TextInput
+          placeholder="Search locations..."
+          placeholderTextColor="#777"
+          style={styles.searchBar}
+          value={searchText}
+          onChangeText={setSearchText}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+
+        {/* Category Boxes */}
+        <View style={styles.categoryContainer}>
+          <TouchableOpacity
+            style={[styles.categoryBox, selectedCategory === "places" && styles.categoryBoxSelected]}
+            onPress={() => setSelectedCategory("places")}
+          >
+            <Text style={styles.categoryText}>PLACES</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.categoryBox, selectedCategory === "events" && styles.categoryBoxSelected]}
+            onPress={() => setSelectedCategory("events")}
+          >
+            <Text style={styles.categoryText}>EVENTS</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.categoryBox, selectedCategory === "food" && styles.categoryBoxSelected]}
+            onPress={() => setSelectedCategory("food")}
+          >
+            <Text style={styles.categoryText}>FOOD</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Recommendations */}
+        <Text style={styles.sectionTitle}>
+          Recommended {selectedCategory.toUpperCase()}
+        </Text>
+
+        {/* Loading state */}
+        {loading && <ActivityIndicator size="large" color="#FF5A5F" style={{ marginVertical: 20 }} />}
+
+        {/* Error state */}
+        {error ? (
+          <Text style={{ color: "red", textAlign: "center", marginVertical: 20 }}>{error}</Text>
+        ) : (
+          getCategoryData().map((item) => (
+            <View key={item._id || item.id} style={styles.postCard}>
+              <Image
+                source={
+                  item.ImageURL
+                    ? { uri: item.ImageURL }
+                    : require("@/assets/images/amber-fort.jpg")
+                }
+                style={styles.postImage}
+              />
+              <View style={styles.postContent}>
+                <Text style={styles.postTitle}>{item.Name}</Text>
+                <Text style={styles.postDescription}>{item.Description}</Text>
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    padding: 16,
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  searchBar: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 18,
+  },
+  categoryContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  categoryBox: {
+    flex: 1,
+    padding: 14,
+    marginHorizontal: 4,
+    backgroundColor: "#ececec",
+    borderRadius: 14,
+    alignItems: "center",
+  },
+  categoryBoxSelected: {
+    backgroundColor: "#FF5A5F",
+  },
+  categoryText: {
+    fontSize: 14,
+    color: "#000",
+  },
+  sectionTitle: {
+    fontSize: 18,
+    marginBottom: 12,
+  },
+  postCard: {
+    marginBottom: 18,
+    borderRadius: 16,
+    overflow: "hidden",
+    borderWidth: 1,
+  },
+  postImage: {
+    height: 160,
+    width: "100%",
+  },
+  postContent: {
+    padding: 12,
+  },
+  postTitle: {
+    fontSize: 16,
+  },
+  postDescription: {
+    marginTop: 4,
   },
 });

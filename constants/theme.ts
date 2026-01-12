@@ -41,7 +41,7 @@ export const Fonts = Platform.select({
   default: {
     sans: 'normal',
     serif: 'serif',
-    rounded: 'normal',
+    rounded: Platform.OS === 'ios' ? 'ui-rounded' : 'sans-serif', 
     mono: 'monospace',
   },
   web: {
