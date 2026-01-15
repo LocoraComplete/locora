@@ -1,5 +1,7 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   Image,
   StyleSheet,
@@ -14,13 +16,39 @@ export default function ProfileSetupScreen() {
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
-
-  const handleContinue = () => {
-    if (!name || !location) return;
-
-    // Go to Explore tab after setup
-    router.replace("/(tabs)/explore");
+   useEffect(() => {
+  const loadUser = async () => {
+    const storedUser = await AsyncStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setName(user.Name || "");
+    }
   };
+
+  loadUser();
+}, []);
+
+  const handleContinue = async () => {
+  if (!name || !location) return;
+
+  const storedUser = await AsyncStorage.getItem("user");
+
+  if (storedUser) {
+    const user = JSON.parse(storedUser);
+
+    await AsyncStorage.setItem(
+      "user",
+      JSON.stringify({
+        ...user,
+        Location: location,
+        profileCompleted: true,
+      })
+    );
+  }
+
+  router.replace("/(tabs)/explore");
+};
+
 
   return (
     <View style={styles.container}>
@@ -101,3 +129,4 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   View,
   Text,
-  Image,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -17,28 +18,29 @@ export default function Profile() {
   const [themeMode, setThemeMode] = useState<"light" | "dark" | "system">(
     "system"
   );
+  const [user, setUser] = useState<any>(null);
 
-  const user = {
-    username: "kashish",
-    name: "Kashish Chawla",
-    bio: "Exploring Rajasthan one city at a time 🕌✨",
-    pic: require("../../assets/images/test.png"),
-    stats: { posts: 4, followers: "1.1k", following: "230" },
-    posts: [
-      require("../../assets/images/post1.jpg"),
-      require("../../assets/images/post2.jpg"),
-      require("../../assets/images/post3.jpg"),
-      require("../../assets/images/post1.jpg"),
-    ],
-  };
+  // 🔹 Load user from AsyncStorage
+  useEffect(() => {
+    const loadUser = async () => {
+      const storedUser = await AsyncStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    };
+    loadUser();
+  }, []);
+
+  // 🔹 Prevent crash while loading
+  if (!user) return null;
 
   return (
     <>
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.username}>@{user.username}</Text>
+            <Text style={styles.username}>{user.Handle}</Text>
 
             <TouchableOpacity onPress={() => setSettingsOpen(true)}>
               <Ionicons name="settings-outline" size={24} color="#000" />
@@ -48,7 +50,11 @@ export default function Profile() {
           {/* Profile Row */}
           <View style={styles.profileRow}>
             <View style={styles.avatarWrapper}>
-              <Image source={user.pic} style={styles.avatar} />
+              {/* ✅ SAFE PLACEHOLDER AVATAR */}
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={40} color="#888" />
+              </View>
+
               <View style={styles.addBadge}>
                 <Ionicons name="add" size={14} color="#fff" />
               </View>
@@ -56,15 +62,15 @@ export default function Profile() {
 
             <View style={styles.statsRow}>
               <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{user.stats.posts}</Text>
+                <Text style={styles.statNumber}>0</Text>
                 <Text style={styles.statLabel}>Posts</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{user.stats.followers}</Text>
+                <Text style={styles.statNumber}>0</Text>
                 <Text style={styles.statLabel}>Followers</Text>
               </View>
               <View style={styles.statBox}>
-                <Text style={styles.statNumber}>{user.stats.following}</Text>
+                <Text style={styles.statNumber}>0</Text>
                 <Text style={styles.statLabel}>Following</Text>
               </View>
             </View>
@@ -72,8 +78,8 @@ export default function Profile() {
 
           {/* Bio */}
           <View style={styles.bioBox}>
-            <Text style={styles.name}>{user.name}</Text>
-            <Text style={styles.bio}>{user.bio}</Text>
+            <Text style={styles.name}>{user.Name}</Text>
+            <Text style={styles.bio}>Welcome to Locora 🌍</Text>
           </View>
 
           {/* Action Buttons */}
@@ -89,18 +95,9 @@ export default function Profile() {
             </TouchableOpacity>
           </View>
 
-          {/* Section Label */}
-          <View style={styles.sectionHeader}>
-            <Ionicons name="grid-outline" size={16} />
-            <Text style={styles.sectionText}>My Posts</Text>
-          </View>
-
-          {/* Posts Grid */}
-          <View style={styles.grid}>
-            {user.posts.map((p, i) => (
-              <Image key={i} source={p} style={styles.post} />
-            ))}
-          </View>
+          <Text style={{ textAlign: "center", color: "#777", marginTop: 20 }}>
+            No posts yet
+          </Text>
         </ScrollView>
       </SafeAreaView>
 
@@ -119,7 +116,6 @@ export default function Profile() {
         <View style={styles.settingsSheet}>
           <Text style={styles.settingsTitle}>Settings</Text>
 
-          {/* Theme Mode */}
           <View style={styles.settingsGroup}>
             <Text style={styles.groupLabel}>Mode</Text>
 
@@ -142,23 +138,9 @@ export default function Profile() {
             ))}
           </View>
 
-          {/* Policy Links */}
           <TouchableOpacity style={styles.optionRow}>
-            <Text style={styles.optionText}>Privacy Policy</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.optionRow}>
-            <Text style={styles.optionText}>Terms of Service</Text>
-          </TouchableOpacity>
-
-          {/* Account Section */}
-          <TouchableOpacity style={styles.optionRow}>
-            <Text style={[styles.optionText, { color: "#C70000" }]}>Logout</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.optionRow}>
-            <Text style={[styles.optionText, { color: "#b00000" }]}>
-              Delete Account
+            <Text style={[styles.optionText, { color: "#C70000" }]}>
+              Logout
             </Text>
           </TouchableOpacity>
         </View>
@@ -171,7 +153,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-    paddingHorizontal: 16, // horizontal padding only, top handled by SafeAreaView
+    paddingHorizontal: 16,
   },
 
   header: {
@@ -183,16 +165,24 @@ const styles = StyleSheet.create({
 
   username: { fontSize: 18, fontWeight: "900" },
 
-  profileRow: { flexDirection: "row", alignItems: "center", gap: 18, marginBottom: 16 },
+  profileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 18,
+    marginBottom: 16,
+  },
 
   avatarWrapper: { position: "relative" },
 
-  avatar: {
+  avatarPlaceholder: {
     width: 90,
     height: 90,
-    borderRadius: 50,
+    borderRadius: 45,
     borderWidth: 2,
     borderColor: "#e6a100",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f1f1f1",
   },
 
   addBadge: {
@@ -204,7 +194,11 @@ const styles = StyleSheet.create({
     padding: 4,
   },
 
-  statsRow: { flex: 1, flexDirection: "row", justifyContent: "space-around" },
+  statsRow: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
 
   statBox: { alignItems: "center" },
 
@@ -233,28 +227,6 @@ const styles = StyleSheet.create({
 
   actionText: { fontWeight: "700", fontSize: 12 },
 
-  sectionHeader: {
-    flexDirection: "row",
-    gap: 6,
-    alignItems: "center",
-    marginBottom: 6,
-  },
-
-  sectionText: { fontWeight: "900", fontSize: 12 },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-
-  post: {
-    width: "32%",
-    aspectRatio: 1,
-    borderRadius: 8,
-  },
-
-  // SETTINGS SHEET
   modalOverlay: { flex: 1, backgroundColor: "#00000055" },
 
   settingsSheet: {
@@ -282,3 +254,5 @@ const styles = StyleSheet.create({
 
   optionText: { fontSize: 14, fontWeight: "600" },
 });
+
+
