@@ -1,10 +1,6 @@
 import axios from "axios";
-import Constants from "expo-constants";
 
-export const API_BASE_URL =
-  Constants.expoConfig?.extra?.apiUrl ??
-  "https://locora-backend.onrender.com";
-
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {

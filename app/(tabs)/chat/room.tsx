@@ -1,4 +1,6 @@
 import { API_BASE_URL } from "@/config/api";
+import { getSocket } from "@/config/socket";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -14,60 +16,96 @@ import {
 } from "react-native";
 
 export default function Room() {
-  const { chatId, title } = useLocalSearchParams<{
-    chatId: string;
-    title?: string;
-  }>();
+  const { chatId } = useLocalSearchParams<{ chatId: string }>();
 
-  const CHAT_ID = chatId;          
-  const USER_ID = "U003";         
+  const CHAT_ID = chatId;
+  const socket = getSocket();
 
+  const [USER_ID, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
+
   const scrollRef = useRef<ScrollView>(null);
 
-  // Load messages
+  // ✅ Load logged-in user
+  useEffect(() => {
+    const loadUser = async () => {
+      const userString = await AsyncStorage.getItem("user");
+
+      if (userString) {
+        const user = JSON.parse(userString);
+        console.log("Loaded user:", user);
+        setUserId(user.UserId);
+      } else {
+        console.log("No user found in AsyncStorage");
+      }
+    };
+
+    loadUser();
+  }, []);
+
+  // ✅ Load chat history
   const loadMessages = async () => {
     try {
+      console.log("Loading messages for:", CHAT_ID);
+
       const res = await axios.get(
         `${API_BASE_URL}/api/messages/${CHAT_ID}`
       );
+
+      console.log("Messages received:", res.data);
+
       setMessages(res.data);
+
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 200);
     } catch (err) {
       console.log("Load messages error", err);
     }
   };
 
+  // ✅ Join room + listen
   useEffect(() => {
-    if (CHAT_ID) {
-      loadMessages();
+    if (!CHAT_ID || !USER_ID) {
+      console.log("Waiting for CHAT_ID or USER_ID");
+      return;
     }
-  }, [CHAT_ID]);
 
-  const sendMessage = async () => {
-    if (!inputText.trim() || !CHAT_ID) return;
+    console.log("Joining chat:", CHAT_ID);
 
-    const payload = {
-      ChatId: CHAT_ID,
-      SenderId: USER_ID,
-      Text: inputText,
-    };
+    loadMessages();
 
-    try {
-      const res = await axios.post(
-        `${API_BASE_URL}/api/messages/send`,
-        payload
-      );
+    socket.emit("join_chat", CHAT_ID);
 
-      setMessages((prev) => [...prev, res.data]);
-      setInputText("");
+    const handleReceive = (message: any) => {
+      console.log("Received message:", message);
+
+      setMessages((prev) => [...prev, message]);
 
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    } catch (err) {
-      console.log("Send message error", err);
-    }
+      }, 200);
+    };
+
+    socket.on("receive_message", handleReceive);
+
+    return () => {
+      socket.off("receive_message", handleReceive);
+    };
+  }, [CHAT_ID, USER_ID]);
+
+  // ✅ Send message
+  const sendMessage = () => {
+    if (!inputText.trim() || !CHAT_ID || !USER_ID) return;
+
+    socket.emit("send_message", {
+      ChatId: CHAT_ID,
+      SenderId: USER_ID,
+      Text: inputText,
+    });
+
+    setInputText("");
   };
 
   return (
@@ -75,19 +113,28 @@ export default function Room() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <ScrollView ref={scrollRef} style={styles.messages}>
-        {messages.map((msg, index) => (
-          <View
-            key={index}
-            style={
-              msg.SenderId === USER_ID
-                ? styles.messageSent
-                : styles.messageReceived
-            }
-          >
-            <Text>{msg.Text}</Text>
-          </View>
-        ))}
+      <ScrollView
+        ref={scrollRef}
+        style={styles.messages}
+        contentContainerStyle={{ paddingVertical: 10 }}
+      >
+        {messages.map((msg, index) => {
+          const isMine = msg.SenderId === USER_ID;
+
+          return (
+            <View
+              key={index}
+              style={isMine ? styles.messageSent : styles.messageReceived}
+            >
+              {!isMine && (
+                <Text style={styles.senderName}>
+                  {msg.SenderName || "User"}
+                </Text>
+              )}
+              <Text>{msg.Text}</Text>
+            </View>
+          );
+        })}
       </ScrollView>
 
       <View style={styles.inputRow}>
@@ -106,14 +153,8 @@ export default function Room() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF",
-  },
-  messages: {
-    flex: 1,
-    paddingHorizontal: 15,
-  },
+  container: { flex: 1, backgroundColor: "#FFF" },
+  messages: { flex: 1, paddingHorizontal: 15 },
   messageReceived: {
     alignSelf: "flex-start",
     backgroundColor: "#EAEAEA",
@@ -129,6 +170,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 10,
     maxWidth: "75%",
+  },
+  senderName: {
+    fontSize: 10,
+    fontWeight: "bold",
+    marginBottom: 4,
   },
   inputRow: {
     flexDirection: "row",

@@ -84,11 +84,19 @@ export default function Community() {
 
             {/* Actions */}
             <View style={styles.actions}>
-              <TouchableOpacity onPress={() => toggleLike(post.id)}>
-                <Text style={styles.actionText}>
-                  ❤️ {post.likes} Likes
+                <TouchableOpacity 
+                  onPress={() => toggleLike(post.id)}
+                  style={styles.likeButton}
+                >
+                <Text style={styles.heart}>
+                  {post.liked ? "❤️" : "🤍"}
+                </Text>
+
+                <Text style={styles.likesText}>
+                  {post.likes} Likes
                 </Text>
               </TouchableOpacity>
+
 
               <TouchableOpacity
                 onPress={() =>
@@ -130,4 +138,23 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   actionText: { fontSize: 14, fontWeight: "600" },
+  likeButton: {
+  flexDirection: "row",
+  alignItems: "center",
+},
+
+heart: {
+  fontSize: 18,
+  marginRight: 6,
+  textShadowColor: "#aaa", 
+  textShadowOffset: { width: 0, height: 0 },
+  textShadowRadius: 1,
+},
+
+likesText: {
+  fontSize: 14,
+  fontWeight: "600",
+  color: "#000",
+},
+
 });
