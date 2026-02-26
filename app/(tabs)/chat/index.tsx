@@ -14,7 +14,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -33,7 +33,6 @@ export default function ChatList() {
   const [description, setDescription] = useState("");
 
   /* ================= LOAD USER ================= */
-
   useEffect(() => {
     const loadUser = async () => {
       const storedUser = await AsyncStorage.getItem("user");
@@ -46,7 +45,7 @@ export default function ChatList() {
 
     loadUser();
   }, []);
-  
+
   useEffect(() => {
     if (currentUserId) {
       loadMyGroups();
@@ -55,7 +54,6 @@ export default function ChatList() {
   }, [currentUserId]);
 
   /* ================= LOAD MY GROUPS ================= */
-
   const loadMyGroups = async () => {
     try {
       setLoading(true);
@@ -71,7 +69,6 @@ export default function ChatList() {
   };
 
   /* ================= LOAD RECOMMENDED ================= */
-
   const loadRecommended = async () => {
     try {
       const res = await axios.get(
@@ -84,7 +81,6 @@ export default function ChatList() {
   };
 
   /* ================= CREATE GROUP ================= */
-
   const createGroup = async () => {
     if (!groupName.trim()) {
       Alert.alert("Group name required");
@@ -96,9 +92,18 @@ export default function ChatList() {
       return;
     }
 
+    // Prevent creating duplicate group name
+    const duplicate = myGroups.find(
+      (g) => g.GroupName.toLowerCase() === groupName.trim().toLowerCase()
+    );
+    if (duplicate) {
+      Alert.alert("Group already exists");
+      return;
+    }
+
     try {
       await axios.post(`${API_BASE_URL}/api/chat/create`, {
-        GroupName: groupName,
+        GroupName: groupName.trim(),
         Description: description,
         CreatedBy: currentUserId,
       });
@@ -107,6 +112,7 @@ export default function ChatList() {
       setGroupName("");
       setDescription("");
 
+      // Refresh lists
       loadMyGroups();
       loadRecommended();
 
@@ -118,7 +124,6 @@ export default function ChatList() {
   };
 
   /* ================= JOIN GROUP ================= */
-
   const joinGroup = async (chatId: string) => {
     if (!currentUserId) return;
 
@@ -138,7 +143,6 @@ export default function ChatList() {
   };
 
   /* ================= OPEN CHAT ================= */
-
   const openChat = (chat: any) => {
     router.push({
       pathname: "/chat/room",
@@ -174,8 +178,7 @@ export default function ChatList() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-
-        {/* RECOMMENDED GROUPS (HORIZONTAL CARDS — SAME STYLE) */}
+        {/* RECOMMENDED GROUPS */}
         <View style={styles.recommendationSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionLabel}>Join Travel Groups</Text>
@@ -249,16 +252,14 @@ export default function ChatList() {
                   <Text style={styles.chatName}>{chat.GroupName}</Text>
                   <Text style={styles.chatTime}>Now</Text>
                 </View>
-                <Text style={styles.chatMsg}>
-                  Tap to open chat
-                </Text>
+                <Text style={styles.chatMsg}>Tap to open chat</Text>
               </View>
             </Pressable>
           ))}
         </View>
       </ScrollView>
 
-      {/* MODAL */}
+      {/* CREATE GROUP MODAL */}
       <Modal visible={modalVisible} animationType="slide">
         <SafeAreaView style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Create Group</Text>
@@ -296,10 +297,8 @@ export default function ChatList() {
 }
 
 /* ================= STYLES ================= */
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -307,19 +306,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-
-  title: {
-    fontSize: 20,
-    fontWeight: "900",
-    fontStyle: "italic",
-  },
-
-  plusBtn: {
-    backgroundColor: "#fbbf24",
-    padding: 10,
-    borderRadius: 14,
-  },
-
+  title: { fontSize: 20, fontWeight: "900", fontStyle: "italic" },
+  plusBtn: { backgroundColor: "#fbbf24", padding: 10, borderRadius: 14 },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -330,167 +318,29 @@ const styles = StyleSheet.create({
     height: 40,
     gap: 8,
   },
-
-  searchInput: {
-    flex: 1,
-  },
-
-  recommendationSection: {
-    marginBottom: 10,
-  },
-
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-
-  sectionLabel: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: "#888",
-  },
-
-  groupCard: {
-    width: 170,
-    backgroundColor: "#fef3c7",
-    borderRadius: 20,
-    marginLeft: 16,
-    padding: 12,
-    alignItems: "center",
-  },
-
-  groupImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    marginBottom: 6,
-  },
-
-  groupName: {
-    fontSize: 12,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-
-  groupMembers: {
-    fontSize: 10,
-    color: "#555",
-    marginBottom: 6,
-  },
-
-  joinBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fbbf24",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-
-  joinBtnText: {
-    fontSize: 10,
-    color: "#fff",
-    fontWeight: "700",
-  },
-
-  createGroup: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "center",
-    margin: 16,
-    padding: 14,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#ccc",
-  },
-
-  createIcon: {
-    width: 48,
-    height: 48,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  createTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  createSubtitle: {
-    fontSize: 10,
-    color: "#666",
-  },
-
-  chatList: {
-    paddingHorizontal: 16,
-    paddingBottom: 30,
-  },
-
-  chatCard: {
-    flexDirection: "row",
-    gap: 12,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-  },
-
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-  },
-
-  chatTopRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-
-  chatName: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  chatTime: {
-    fontSize: 10,
-    color: "#888",
-  },
-
-  chatMsg: {
-    fontSize: 12,
-    color: "#555",
-  },
-
-  /* MODAL */
-
-  modalContainer: {
-    flex: 1,
-    padding: 20,
-  },
-
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 15,
-  },
-
-  createBtn: {
-    backgroundColor: "#fbbf24",
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-  },
+  searchInput: { flex: 1 },
+  recommendationSection: { marginBottom: 10 },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 16, marginBottom: 8 },
+  sectionLabel: { fontSize: 10, fontWeight: "900", color: "#888" },
+  groupCard: { width: 170, backgroundColor: "#fef3c7", borderRadius: 20, marginLeft: 16, padding: 12, alignItems: "center" },
+  groupImage: { width: 50, height: 50, borderRadius: 12, marginBottom: 6 },
+  groupName: { fontSize: 12, fontWeight: "700", textAlign: "center" },
+  groupMembers: { fontSize: 10, color: "#555", marginBottom: 6 },
+  joinBtn: { flexDirection: "row", alignItems: "center", backgroundColor: "#fbbf24", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 4 },
+  joinBtnText: { fontSize: 10, color: "#fff", fontWeight: "700" },
+  createGroup: { flexDirection: "row", gap: 12, alignItems: "center", margin: 16, padding: 14, borderRadius: 20, borderWidth: 1, borderStyle: "dashed", borderColor: "#ccc" },
+  createIcon: { width: 48, height: 48, backgroundColor: "#fff", borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  createTitle: { fontSize: 14, fontWeight: "700" },
+  createSubtitle: { fontSize: 10, color: "#666" },
+  chatList: { paddingHorizontal: 16, paddingBottom: 30 },
+  chatCard: { flexDirection: "row", gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderColor: "#eee" },
+  avatar: { width: 50, height: 50, borderRadius: 14 },
+  chatTopRow: { flexDirection: "row", justifyContent: "space-between" },
+  chatName: { fontSize: 14, fontWeight: "700" },
+  chatTime: { fontSize: 10, color: "#888" },
+  chatMsg: { fontSize: 12, color: "#555" },
+  modalContainer: { flex: 1, padding: 20 },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 20 },
+  input: { borderWidth: 1, borderColor: "#ddd", borderRadius: 8, padding: 10, marginBottom: 15 },
+  createBtn: { backgroundColor: "#fbbf24", padding: 12, borderRadius: 10, alignItems: "center" },
 });
