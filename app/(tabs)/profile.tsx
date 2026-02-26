@@ -33,7 +33,6 @@ export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // LOAD USER
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -56,18 +55,12 @@ export default function Profile() {
     loadUser();
   }, []);
 
-  // LOGOUT
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem("user");
-      setSettingsOpen(false);
-      router.replace("/(auth)/login");
-    } catch (error) {
-      console.log("Logout error:", error);
-    }
+    await AsyncStorage.removeItem("user");
+    setSettingsOpen(false);
+    router.replace("/(auth)/login");
   };
 
-  // DELETE ACCOUNT
   const handleDeleteAccount = () => {
     Alert.alert(
       "Delete Account",
@@ -89,9 +82,7 @@ export default function Profile() {
 
               setSettingsOpen(false);
               router.replace("/(auth)/login");
-
             } catch (error: any) {
-              console.log("DELETE ERROR:", error?.response?.data || error);
               Alert.alert(
                 "Error",
                 error?.response?.data?.message || "Failed to delete account"
@@ -103,37 +94,82 @@ export default function Profile() {
     );
   };
 
-  if (loading) {
-    return <SafeAreaView style={styles.loadingScreen} />;
-  }
-
+  if (loading) return <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} />;
   if (!user) return null;
 
   const themeModes: ThemeMode[] = ["light", "dark", "system"];
 
   return (
     <>
-      <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+      <SafeAreaView style={styles.container}>
         <ScrollView showsVerticalScrollIndicator={false}>
+
+          {/* HEADER */}
           <View style={styles.header}>
             <Text style={styles.username}>{user.Handle}</Text>
-
             <TouchableOpacity onPress={() => setSettingsOpen(true)}>
               <Ionicons name="settings-outline" size={24} color="#000" />
             </TouchableOpacity>
           </View>
 
+          {/* PROFILE ROW */}
           <View style={styles.profileRow}>
+
+            {/* AVATAR */}
             <View style={styles.avatarWrapper}>
-              <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={40} color="#888" />
+              <View style={styles.avatarBorder}>
+                <View style={styles.avatarPlaceholder}>
+                  <Ionicons name="person" size={40} color="#999" />
+                </View>
+              </View>
+
+              <View style={styles.plusIcon}>
+                <Ionicons name="add" size={16} color="#fff" />
+              </View>
+            </View>
+
+            {/* STATS */}
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Posts</Text>
+              </View>
+
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Followers</Text>
+              </View>
+
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>Following</Text>
               </View>
             </View>
           </View>
 
+          {/* NAME + BIO */}
           <View style={styles.bioBox}>
             <Text style={styles.name}>{user.Name}</Text>
             <Text style={styles.bio}>Welcome to Locora 🌍</Text>
+          </View>
+
+          {/* BUTTONS */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+               style={styles.outlineButton}
+                onPress={() => router.push("/profile")}
+             >
+             <Text style={styles.buttonText}>Edit Profile</Text>
+             </TouchableOpacity>
+
+            <TouchableOpacity style={styles.outlineButton}>
+              <Text style={styles.buttonText}>Add Post</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* NO POSTS */}
+          <View style={styles.noPostsContainer}>
+            <Text style={styles.noPostsText}>No posts yet</Text>
           </View>
 
         </ScrollView>
@@ -167,12 +203,8 @@ export default function Profile() {
             </TouchableOpacity>
           ))}
 
-          {/* DELETE */}
-          <TouchableOpacity
-            style={styles.optionRow}
-            onPress={handleDeleteAccount}
-          >
-            <View style={styles.deleteRow}>
+          <TouchableOpacity style={styles.optionRow} onPress={handleDeleteAccount}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <Ionicons name="trash-outline" size={16} color="#C70000" />
               <Text style={[styles.optionText, { color: "#C70000" }]}>
                 Delete Account
@@ -180,14 +212,8 @@ export default function Profile() {
             </View>
           </TouchableOpacity>
 
-          {/* LOGOUT */}
-          <TouchableOpacity
-            style={styles.optionRow}
-            onPress={handleLogout}
-          >
-            <Text style={{ fontWeight: "700" }}>
-              Logout
-            </Text>
+          <TouchableOpacity style={styles.optionRow} onPress={handleLogout}>
+            <Text style={{ fontWeight: "700" }}>Logout</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -196,17 +222,41 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 16 },
-  loadingScreen: { flex: 1, backgroundColor: "#fff" },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingHorizontal: 16,
+  },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 20,
   },
-  username: { fontSize: 18, fontWeight: "900" },
-  profileRow: { marginBottom: 16 },
-  avatarWrapper: { alignItems: "center" },
+
+  username: {
+    fontSize: 18,
+    fontWeight: "900",
+  },
+
+  profileRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+
+  avatarWrapper: {
+    position: "relative",
+  },
+
+  avatarBorder: {
+    borderWidth: 3,
+    borderColor: "#F4B400",
+    borderRadius: 50,
+    padding: 3,
+  },
+
   avatarPlaceholder: {
     width: 90,
     height: 90,
@@ -215,10 +265,87 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f1f1f1",
   },
-  bioBox: { marginTop: 10, alignItems: "center" },
-  name: { fontWeight: "900", fontSize: 15 },
-  bio: { marginTop: 4, color: "#555" },
-  modalOverlay: { flex: 1, backgroundColor: "#00000055" },
+
+  plusIcon: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#F4B400",
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  statsRow: {
+    flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
+
+  statItem: {
+    alignItems: "center",
+  },
+
+  statNumber: {
+    fontWeight: "900",
+    fontSize: 16,
+  },
+
+  statLabel: {
+    fontSize: 12,
+    color: "#555",
+  },
+
+  bioBox: {
+    marginTop: 10,
+  },
+
+  name: {
+    fontWeight: "900",
+    fontSize: 15,
+  },
+
+  bio: {
+    marginTop: 4,
+    color: "#555",
+  },
+
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 15,
+  },
+
+  outlineButton: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 4,
+  },
+
+  buttonText: {
+    fontWeight: "600",
+  },
+
+  noPostsContainer: {
+    alignItems: "center",
+    marginTop: 40,
+  },
+
+  noPostsText: {
+    color: "#777",
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "#00000055",
+  },
+
   settingsSheet: {
     position: "absolute",
     bottom: 0,
@@ -228,13 +355,22 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 18,
   },
-  settingsTitle: { fontWeight: "900", fontSize: 16, marginBottom: 12 },
+
+  settingsTitle: {
+    fontWeight: "900",
+    fontSize: 16,
+    marginBottom: 12,
+  },
+
   optionRow: {
     paddingVertical: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  optionText: { fontSize: 14, fontWeight: "600" },
-  deleteRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+
+  optionText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });
