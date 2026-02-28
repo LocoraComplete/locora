@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../../config/api";
 import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import api from "../../config/api";
 
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
+  Alert,
   Modal,
   Pressable,
-  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";

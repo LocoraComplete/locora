@@ -34,17 +34,24 @@ export default function ChatList() {
 
   /* ================= LOAD USER ================= */
   useEffect(() => {
-    const loadUser = async () => {
-      const storedUser = await AsyncStorage.getItem("user");
+  const loadUser = async () => {
+    const storedUser = await AsyncStorage.getItem("user");
 
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setCurrentUserId(parsedUser.UserId);
-      }
-    };
+    console.log("Stored user raw:", storedUser);
 
-    loadUser();
-  }, []);
+    if (storedUser) {
+      const parsedUser = JSON.parse(storedUser);
+      console.log("Parsed user:", parsedUser);
+      console.log("Parsed UserId:", parsedUser?.UserId);
+
+      setCurrentUserId(parsedUser?.UserId);
+    } else {
+      console.log("No user found in AsyncStorage");
+    }
+  };
+
+  loadUser();
+}, []);
 
   useEffect(() => {
     if (currentUserId) {

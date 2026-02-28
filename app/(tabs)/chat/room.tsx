@@ -2,9 +2,10 @@ import { API_BASE_URL } from "@/config/api";
 import { getSocket } from "@/config/socket";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,10 +17,15 @@ import {
 } from "react-native";
 
 export default function Room() {
-  const { chatId } = useLocalSearchParams<{ chatId: string }>();
+  const { chatId, title } = useLocalSearchParams<{
+    chatId: string;
+    title?: string;
+  }>();
+
+  const router = useRouter();
+  const socket = getSocket();
 
   const CHAT_ID = chatId;
-  const socket = getSocket();
 
   const [USER_ID, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -27,60 +33,61 @@ export default function Room() {
 
   const scrollRef = useRef<ScrollView>(null);
 
-  // ✅ Load logged-in user
+  /* ================= LOAD USER & CONNECT SOCKET ================= */
   useEffect(() => {
+    socket.connect();
+
     const loadUser = async () => {
       const userString = await AsyncStorage.getItem("user");
+      if (!userString) return;
 
-      if (userString) {
-        const user = JSON.parse(userString);
-        console.log("Loaded user:", user);
-        setUserId(user.UserId);
-      } else {
-        console.log("No user found in AsyncStorage");
-      }
+      const user = JSON.parse(userString);
+      setUserId(user.UserId);
+
+      socket.emit("register_user", user.UserId);
     };
 
     loadUser();
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
-  // ✅ Load chat history
+  /* ================= LOAD MESSAGES ================= */
   const loadMessages = async () => {
+    if (!CHAT_ID || !USER_ID) return;
+
     try {
-      console.log("Loading messages for:", CHAT_ID);
-
       const res = await axios.get(
-        `${API_BASE_URL}/api/messages/${CHAT_ID}`
+        `${API_BASE_URL}/api/messages/${CHAT_ID}?userId=${USER_ID}`
       );
-
-      console.log("Messages received:", res.data);
 
       setMessages(res.data);
 
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 200);
-    } catch (err) {
-      console.log("Load messages error", err);
+
+    } catch (err: any) {
+      console.log("Load messages error", err?.response?.data || err.message);
+
+      if (err?.response?.status === 403) {
+        Alert.alert("You are no longer in this group");
+        router.replace("/chat");
+      }
     }
   };
 
-  // ✅ Join room + listen
+  /* ================= SOCKET LISTENER ================= */
   useEffect(() => {
-    if (!CHAT_ID || !USER_ID) {
-      console.log("Waiting for CHAT_ID or USER_ID");
-      return;
-    }
-
-    console.log("Joining chat:", CHAT_ID);
+    if (!CHAT_ID || !USER_ID) return;
 
     loadMessages();
 
     socket.emit("join_chat", CHAT_ID);
 
     const handleReceive = (message: any) => {
-      console.log("Received message:", message);
-
       setMessages((prev) => [...prev, message]);
 
       setTimeout(() => {
@@ -95,17 +102,28 @@ export default function Room() {
     };
   }, [CHAT_ID, USER_ID]);
 
-  // ✅ Send message
+  /* ================= SEND MESSAGE ================= */
   const sendMessage = () => {
     if (!inputText.trim() || !CHAT_ID || !USER_ID) return;
 
     socket.emit("send_message", {
       ChatId: CHAT_ID,
       SenderId: USER_ID,
-      Text: inputText,
+      Text: inputText.trim(),
+      IsSystem: false,
     });
 
     setInputText("");
+  };
+
+  /* ================= OPEN GROUP INFO ================= */
+  const openGroupInfo = () => {
+    if (!CHAT_ID) return;
+
+    router.push({
+      pathname: "/chat/info",
+      params: { chatId: CHAT_ID },
+    });
   };
 
   return (
@@ -113,12 +131,33 @@ export default function Room() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={openGroupInfo}>
+          <Text style={styles.headerTitle}>
+            {title || "Group Chat"}
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            Tap to view group info
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* MESSAGES */}
       <ScrollView
         ref={scrollRef}
         style={styles.messages}
         contentContainerStyle={{ paddingVertical: 10 }}
       >
         {messages.map((msg, index) => {
+          if (msg.IsSystem) {
+            return (
+              <View key={index} style={styles.systemMessage}>
+                <Text style={styles.systemText}>{msg.Text}</Text>
+              </View>
+            );
+          }
+
           const isMine = msg.SenderId === USER_ID;
 
           return (
@@ -137,6 +176,7 @@ export default function Room() {
         })}
       </ScrollView>
 
+      {/* INPUT */}
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
@@ -152,9 +192,33 @@ export default function Room() {
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF" },
-  messages: { flex: 1, paddingHorizontal: 15 },
+
+  header: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderColor: "#eee",
+  },
+
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  headerSubtitle: {
+    fontSize: 12,
+    color: "#777",
+    marginTop: 2,
+  },
+
+  messages: {
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+
   messageReceived: {
     alignSelf: "flex-start",
     backgroundColor: "#EAEAEA",
@@ -163,6 +227,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
+
   messageSent: {
     alignSelf: "flex-end",
     backgroundColor: "#DCF8C6",
@@ -171,17 +236,34 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
+
   senderName: {
     fontSize: 10,
     fontWeight: "bold",
     marginBottom: 4,
   },
+
+  systemMessage: {
+    alignSelf: "center",
+    backgroundColor: "#EEE",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    marginBottom: 10,
+  },
+
+  systemText: {
+    fontSize: 12,
+    color: "#666",
+  },
+
   inputRow: {
     flexDirection: "row",
     padding: 10,
     borderTopWidth: 1,
     borderColor: "#EEE",
   },
+
   input: {
     flex: 1,
     borderWidth: 1,
@@ -190,6 +272,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
+
   sendBtn: {
     marginLeft: 10,
     backgroundColor: "#000",
@@ -197,6 +280,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
   },
+
   sendText: {
     color: "#FFF",
     fontWeight: "bold",
