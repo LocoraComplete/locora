@@ -1,177 +1,87 @@
 import { API_BASE_URL } from "@/config/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  View,
+  Text
 } from "react-native";
 
-export default function GroupInfo() {
-  const { chatId } = useLocalSearchParams<{ chatId: string }>();
+export default function ChatInfo() {
+  const { chatId, isPrivate, otherUserId } = useLocalSearchParams();
   const router = useRouter();
 
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [group, setGroup] = useState<any>(null);
-  const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [chatData, setChatData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!chatId) return;
-    loadInitialData();
-  }, [chatId]);
+  const privateChat = isPrivate === "true";
 
-  const loadInitialData = async () => {
-    await loadCurrentUser();
-    await loadDetails();
-    await loadOnline();
-  };
+  useFocusEffect(
+    useCallback(() => {
+      if (chatId) loadData();
+    }, [chatId])
+  );
 
-  const loadCurrentUser = async () => {
+  const loadData = async () => {
     try {
-      const user = await AsyncStorage.getItem("user");
-      if (user) {
-        setCurrentUser(JSON.parse(user));
-      }
-    } catch (err) {
-      console.log("User load error:", err);
-    }
-  };
+      setLoading(true);
 
-  const loadDetails = async () => {
-    try {
+      const stored = await AsyncStorage.getItem("user");
+      if (stored) setCurrentUser(JSON.parse(stored));
+
       const res = await axios.get(
         `${API_BASE_URL}/api/chat/details/${chatId}`
       );
-      setGroup(res.data);
-    } catch (err) {
-      console.log("Error loading group:", err);
+
+      setChatData(res.data);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const loadOnline = async () => {
-    try {
-      const res = await axios.get(
-        `${API_BASE_URL}/api/chat/online/${chatId}`
-      );
-      setOnlineUsers(res.data.online || []);
-    } catch (err) {
-      console.log("Error loading online users:", err);
-    }
+  const handleLeaveGroup = async () => {
+    await axios.delete(`${API_BASE_URL}/api/chat/leave/${chatId}`, {
+      data: { userId: currentUser.UserId },
+    });
+    router.replace("/(tabs)/chat");
   };
 
-  const handleLeaveGroup = () => {
-    if (!currentUser?.UserId) return;
-
-    Alert.alert(
-      "Leave Group",
-      "Are you sure you want to leave this group?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Leave",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await axios.delete(
-                `${API_BASE_URL}/api/chat/leave/${chatId}`,
-                {
-                  data: { userId: currentUser.UserId },
-                }
-              );
-
-              Alert.alert("Success", "You left the group");
-              router.replace("/(tabs)/chat");
-            } catch (err: any) {
-              console.log("Leave error:", err?.response?.data || err);
-              Alert.alert(
-                "Error",
-                err?.response?.data?.message ||
-                  "Failed to leave group"
-              );
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteGroup = async () => {
+    await axios.delete(`${API_BASE_URL}/api/chat/delete/${chatId}`, {
+      data: { userId: currentUser.UserId },
+    });
+    router.replace("/(tabs)/chat");
   };
 
-  const handleDeleteGroup = () => {
-    if (!currentUser?.UserId) return;
+  if (loading) return <ActivityIndicator />;
 
-    Alert.alert(
-      "Delete Group",
-      "This action cannot be undone. Delete this group permanently?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await axios.delete(
-                `${API_BASE_URL}/api/chat/delete/${chatId}`,
-                {
-                  data: { userId: currentUser.UserId }, // ✅ FIXED
-                }
-              );
+  if (!chatData) return null;
 
-              Alert.alert("Deleted", "Group deleted successfully");
-              router.replace("/(tabs)/chat");
-            } catch (err: any) {
-              console.log("Delete error:", err?.response?.data || err);
-              Alert.alert(
-                "Error",
-                err?.response?.data?.message ||
-                  "Failed to delete group"
-              );
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  if (!group || !currentUser) return null;
-
-  const isAdmin = group.CreatedBy === currentUser.UserId;
+  const isAdmin = chatData.CreatedBy === currentUser?.UserId;
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>{group.GroupName}</Text>
-      <Text style={styles.desc}>{group.Description}</Text>
-
-      <Text style={styles.section}>
-        Members ({group.TotalMembers})
+      <Text style={styles.title}>
+        {privateChat ? "Private Chat" : chatData.GroupName}
       </Text>
 
-      {group.Members?.map((member: any) => {
-        const isOnline = onlineUsers.includes(member.UserId);
+      {!privateChat && (
+        <>
+          <Pressable style={styles.leaveBtn} onPress={handleLeaveGroup}>
+            <Text style={styles.btnText}>Leave Group</Text>
+          </Pressable>
 
-        return (
-          <View key={member.UserId} style={styles.memberRow}>
-            <Text>{member.Handle}</Text>
-            <Text style={{ color: isOnline ? "green" : "gray" }}>
-              {isOnline ? "Online" : "Offline"}
-            </Text>
-          </View>
-        );
-      })}
-
-      {/* Leave Group Button */}
-      <Pressable style={styles.leaveBtn} onPress={handleLeaveGroup}>
-        <Text style={styles.leaveText}>Leave Group</Text>
-      </Pressable>
-
-      {/* Delete Group Button (Admin Only) */}
-      {isAdmin && (
-        <Pressable style={styles.deleteBtn} onPress={handleDeleteGroup}>
-          <Text style={styles.deleteText}>Delete Group</Text>
-        </Pressable>
+          {isAdmin && (
+            <Pressable style={styles.deleteBtn} onPress={handleDeleteGroup}>
+              <Text style={styles.btnText}>Delete Group</Text>
+            </Pressable>
+          )}
+        </>
       )}
     </ScrollView>
   );
@@ -180,14 +90,6 @@ export default function GroupInfo() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
   title: { fontSize: 22, fontWeight: "bold" },
-  desc: { marginVertical: 10, color: "#666" },
-  section: { marginTop: 20, fontWeight: "bold" },
-  memberRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 8,
-  },
-
   leaveBtn: {
     marginTop: 30,
     padding: 14,
@@ -195,11 +97,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  leaveText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-
   deleteBtn: {
     marginTop: 15,
     padding: 14,
@@ -207,8 +104,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  deleteText: {
-    color: "white",
-    fontWeight: "bold",
-  },
+  btnText: { color: "#fff", fontWeight: "bold" },
 });

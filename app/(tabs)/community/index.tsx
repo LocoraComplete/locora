@@ -12,8 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 const postsData = [
   {
-    id: 1,
-    username: "traveler_anu",
+    id: "U009",
+    username: "@lailasingh",
     profilePic: require("@/assets/images/user1.jpg"),
     postImage: require("@/assets/images/community1.jpg"),
     likes: 120,
@@ -22,8 +22,8 @@ const postsData = [
     location: "Jaipur, Rajasthan",
   },
   {
-    id: 2,
-    username: "rajasthan_diaries",
+    id: "U008",
+    username: "@pelakcena",
     profilePic: require("@/assets/images/user2.jpg"),
     postImage: require("@/assets/images/community2.jpg"),
     likes: 98,
@@ -37,7 +37,7 @@ export default function Community() {
   const router = useRouter();
   const [posts, setPosts] = useState(postsData);
 
-  const toggleLike = (id: number) => {
+  const toggleLike = (id: string) => {
     setPosts((prev) =>
       prev.map((p) =>
         p.id === id

@@ -17,9 +17,18 @@ import {
 } from "react-native";
 
 export default function Room() {
-  const { chatId, title } = useLocalSearchParams<{
+  const {
+    chatId,
+    title,
+    isPrivate,
+    otherUserId,
+    otherUserHandle,
+  } = useLocalSearchParams<{
     chatId: string;
     title?: string;
+    isPrivate?: string;
+    otherUserId?: string;
+    otherUserHandle?: string;
   }>();
 
   const router = useRouter();
@@ -33,7 +42,7 @@ export default function Room() {
 
   const scrollRef = useRef<ScrollView>(null);
 
-  /* ================= LOAD USER & CONNECT SOCKET ================= */
+  /* LOAD USER */
   useEffect(() => {
     socket.connect();
 
@@ -42,9 +51,13 @@ export default function Room() {
       if (!userString) return;
 
       const user = JSON.parse(userString);
-      setUserId(user.UserId);
+      const id = user?.UserId || user?.id;
 
-      socket.emit("register_user", user.UserId);
+      setUserId(id);
+
+      if (id) {
+        socket.emit("register_user", id);
+      }
     };
 
     loadUser();
@@ -54,7 +67,7 @@ export default function Room() {
     };
   }, []);
 
-  /* ================= LOAD MESSAGES ================= */
+  /* LOAD MESSAGES */
   const loadMessages = async () => {
     if (!CHAT_ID || !USER_ID) return;
 
@@ -68,18 +81,17 @@ export default function Room() {
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
       }, 200);
-
     } catch (err: any) {
       console.log("Load messages error", err?.response?.data || err.message);
 
       if (err?.response?.status === 403) {
-        Alert.alert("You are no longer in this group");
+        Alert.alert("You are no longer in this chat");
         router.replace("/chat");
       }
     }
   };
 
-  /* ================= SOCKET LISTENER ================= */
+  /* SOCKET LISTENER */
   useEffect(() => {
     if (!CHAT_ID || !USER_ID) return;
 
@@ -102,13 +114,14 @@ export default function Room() {
     };
   }, [CHAT_ID, USER_ID]);
 
-  /* ================= SEND MESSAGE ================= */
+  /* SEND MESSAGE */
   const sendMessage = () => {
     if (!inputText.trim() || !CHAT_ID || !USER_ID) return;
 
     socket.emit("send_message", {
       ChatId: CHAT_ID,
       SenderId: USER_ID,
+      ReceiverId: isPrivate === "true" ? otherUserId : null,
       Text: inputText.trim(),
       IsSystem: false,
     });
@@ -116,9 +129,9 @@ export default function Room() {
     setInputText("");
   };
 
-  /* ================= OPEN GROUP INFO ================= */
+  /* OPEN GROUP INFO */
   const openGroupInfo = () => {
-    if (!CHAT_ID) return;
+    if (!CHAT_ID || isPrivate === "true") return;
 
     router.push({
       pathname: "/chat/info",
@@ -135,11 +148,13 @@ export default function Room() {
       <View style={styles.header}>
         <TouchableOpacity onPress={openGroupInfo}>
           <Text style={styles.headerTitle}>
-            {title || "Group Chat"}
+            {isPrivate === "true" ? otherUserHandle : title}
           </Text>
-          <Text style={styles.headerSubtitle}>
-            Tap to view group info
-          </Text>
+          {isPrivate !== "true" && (
+            <Text style={styles.headerSubtitle}>
+              Tap to view group info
+            </Text>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -167,7 +182,7 @@ export default function Room() {
             >
               {!isMine && (
                 <Text style={styles.senderName}>
-                  {msg.SenderName || "User"}
+                  {msg.SenderName || otherUserHandle || "User"}
                 </Text>
               )}
               <Text>{msg.Text}</Text>
@@ -192,33 +207,14 @@ export default function Room() {
   );
 }
 
-/* ================= STYLES ================= */
+/* STYLES UNCHANGED */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF" },
-
-  header: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
-  },
-
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-
-  headerSubtitle: {
-    fontSize: 12,
-    color: "#777",
-    marginTop: 2,
-  },
-
-  messages: {
-    flex: 1,
-    paddingHorizontal: 15,
-  },
-
+  header: { padding: 15, borderBottomWidth: 1, borderColor: "#eee" },
+  headerTitle: { fontSize: 18, fontWeight: "bold" },
+  headerSubtitle: { fontSize: 12, color: "#777", marginTop: 2 },
+  messages: { flex: 1, paddingHorizontal: 15 },
   messageReceived: {
     alignSelf: "flex-start",
     backgroundColor: "#EAEAEA",
@@ -227,7 +223,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
-
   messageSent: {
     alignSelf: "flex-end",
     backgroundColor: "#DCF8C6",
@@ -236,13 +231,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
-
-  senderName: {
-    fontSize: 10,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-
+  senderName: { fontSize: 10, fontWeight: "bold", marginBottom: 4 },
   systemMessage: {
     alignSelf: "center",
     backgroundColor: "#EEE",
@@ -251,19 +240,13 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginBottom: 10,
   },
-
-  systemText: {
-    fontSize: 12,
-    color: "#666",
-  },
-
+  systemText: { fontSize: 12, color: "#666" },
   inputRow: {
     flexDirection: "row",
     padding: 10,
     borderTopWidth: 1,
     borderColor: "#EEE",
   },
-
   input: {
     flex: 1,
     borderWidth: 1,
@@ -272,7 +255,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
-
   sendBtn: {
     marginLeft: 10,
     backgroundColor: "#000",
@@ -280,9 +262,5 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
   },
-
-  sendText: {
-    color: "#FFF",
-    fontWeight: "bold",
-  },
+  sendText: { color: "#FFF", fontWeight: "bold" },
 });
