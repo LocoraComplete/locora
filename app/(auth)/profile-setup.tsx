@@ -1,7 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
 import {
   Image,
   StyleSheet,
@@ -9,52 +8,97 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native";
+import { useTheme } from "../../context/themecontext";
+import { colors } from "../../config/colors";
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const themeColors = colors[theme];
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
-   useEffect(() => {
-  const loadUser = async () => {
-    const storedUser = await AsyncStorage.getItem("user");
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setName(user.Name || "");
+  const [primaryEmergency, setPrimaryEmergency] = useState("");
+  const [secondaryEmergency, setSecondaryEmergency] = useState("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const storedUser = await AsyncStorage.getItem("user");
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        setName(user.Name || "");
+      }
+    };
+    loadUser();
+  }, []);
+
+  const handlePrimaryChange = (text: string) => {
+    const digits = text.replace(/[^0-9]/g, "");
+    if (digits.length <= 10) {
+      setPrimaryEmergency(digits);
     }
   };
 
-  loadUser();
-}, []);
+  const handleSecondaryChange = (text: string) => {
+    const digits = text.replace(/[^0-9]/g, "");
+    if (digits.length <= 10) {
+      setSecondaryEmergency(digits);
+    }
+  };
 
   const handleContinue = async () => {
-  if (!name || !location) return;
+    if (!name || !location || primaryEmergency.length !== 10) {
+      Alert.alert("Error", "Please fill all required fields correctly");
+      return;
+    }
 
-  const storedUser = await AsyncStorage.getItem("user");
+    const formattedPrimary = `+91${primaryEmergency}`;
+    const formattedSecondary =
+      secondaryEmergency.length === 10
+        ? `+91${secondaryEmergency}`
+        : undefined;
 
-  if (storedUser) {
-    const user = JSON.parse(storedUser);
+    const storedUser = await AsyncStorage.getItem("user");
 
-    await AsyncStorage.setItem(
-      "user",
-      JSON.stringify({
-        ...user,
-        Location: location,
-        profileCompleted: true,
-      })
-    );
-  }
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
 
-  router.replace("/(tabs)/explore");
-};
+      await AsyncStorage.setItem(
+        "user",
+        JSON.stringify({
+          ...user,
+          Name: name,
+          Location: location,
+          profileCompleted: true,
+          emergencyContacts: {
+            primary: formattedPrimary,
+            secondary: formattedSecondary,
+          },
+        })
+      );
+    }
 
+    router.replace("/(tabs)/explore");
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Set up your profile</Text>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: themeColors.background },
+      ]}
+    >
+      <Text
+        style={[
+          styles.title,
+          { color: themeColors.text },
+        ]}
+      >
+        Set up your profile
+      </Text>
 
-      {/* Profile Image */}
       <View style={styles.avatarWrapper}>
         <Image
           source={require("@/assets/images/test.png")}
@@ -62,25 +106,121 @@ export default function ProfileSetupScreen() {
         />
       </View>
 
-      {/* Name Input */}
       <TextInput
         placeholder="Your name"
+        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={name}
         onChangeText={setName}
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.card,
+            color: themeColors.text,
+          },
+        ]}
       />
 
-      {/* Location Input */}
       <TextInput
         placeholder="Your city"
+        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={location}
         onChangeText={setLocation}
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.card,
+            color: themeColors.text,
+          },
+        ]}
       />
 
-      {/* Continue Button */}
-      <TouchableOpacity style={styles.button} onPress={handleContinue}>
-        <Text style={styles.buttonText}>Continue</Text>
+      {/* PRIMARY EMERGENCY */}
+      <View
+        style={[
+          styles.phoneContainer,
+          {
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.card,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.prefix,
+            { color: themeColors.text },
+          ]}
+        >
+          +91
+        </Text>
+        <TextInput
+          placeholder="Primary Emergency *"
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          value={primaryEmergency}
+          onChangeText={handlePrimaryChange}
+          keyboardType="number-pad"
+          maxLength={10}
+          style={[
+            styles.phoneInput,
+            { color: themeColors.text },
+          ]}
+        />
+      </View>
+
+      {/* SECONDARY EMERGENCY */}
+      <View
+        style={[
+          styles.phoneContainer,
+          {
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.card,
+          },
+        ]}
+      >
+        <Text
+          style={[
+            styles.prefix,
+            { color: themeColors.text },
+          ]}
+        >
+          +91
+        </Text>
+        <TextInput
+          placeholder="Secondary Emergency"
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          value={secondaryEmergency}
+          onChangeText={handleSecondaryChange}
+          keyboardType="number-pad"
+          maxLength={10}
+          style={[
+            styles.phoneInput,
+            { color: themeColors.text },
+          ]}
+        />
+      </View>
+
+      <TouchableOpacity
+        style={[
+          styles.button,
+          {
+            backgroundColor:
+              theme === "dark" ? "#ffffff" : "#000000",
+          },
+        ]}
+        onPress={handleContinue}
+      >
+        <Text
+          style={[
+            styles.buttonText,
+            {
+              color:
+                theme === "dark" ? "#000000" : "#ffffff",
+            },
+          ]}
+        >
+          Continue
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -91,7 +231,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
   },
   title: {
     fontSize: 26,
@@ -110,23 +249,37 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 14,
     fontSize: 16,
     marginBottom: 16,
   },
+  phoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 16,
+    paddingHorizontal: 14,
+  },
+  prefix: {
+    fontSize: 16,
+    marginRight: 8,
+    fontWeight: "500",
+  },
+  phoneInput: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 16,
+  },
   button: {
-    backgroundColor: "#000000",
     paddingVertical: 14,
     borderRadius: 12,
     marginTop: 8,
   },
   buttonText: {
-    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
     textAlign: "center",
   },
 });
-

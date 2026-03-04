@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useTheme } from "../../../context/themecontext";
+import { colors } from "../../../config/colors";
 
 const dummyComments = [
   { id: 1, user: "rahul_travels", text: "This place looks amazing!" },
@@ -18,24 +20,48 @@ export default function Comments() {
   const router = useRouter();
   const { postId } = useLocalSearchParams();
 
+  const { theme } = useTheme();
+  const themeColors = theme === "dark" ? colors.dark : colors.light;
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+    >
       {/* Header */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          { borderColor: themeColors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backArrow}>←</Text>
+          <Text style={[styles.backArrow, { color: themeColors.text }]}>
+            ←
+          </Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>Comments</Text>
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          Comments
+        </Text>
 
         <View style={{ width: 20 }} />
       </View>
 
       <ScrollView style={styles.commentBox}>
         {dummyComments.map((c) => (
-          <View key={c.id} style={styles.commentCard}>
-            <Text style={styles.user}>{c.user}</Text>
-            <Text style={styles.comment}>{c.text}</Text>
+          <View
+            key={c.id}
+            style={[
+              styles.commentCard,
+              { backgroundColor: themeColors.card },
+            ]}
+          >
+            <Text style={[styles.user, { color: themeColors.text }]}>
+              {c.user}
+            </Text>
+            <Text style={[styles.comment, { color: themeColors.text }]}>
+              {c.text}
+            </Text>
           </View>
         ))}
       </ScrollView>
@@ -44,29 +70,43 @@ export default function Comments() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: {
+    flex: 1,
+  },
 
   header: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderColor: "#eee",
     justifyContent: "space-between",
   },
 
-  backArrow: { fontSize: 20 },
-  title: { fontWeight: "900", fontSize: 16 },
+  backArrow: {
+    fontSize: 20,
+  },
 
-  commentBox: { padding: 16 },
+  title: {
+    fontWeight: "900",
+    fontSize: 16,
+  },
+
+  commentBox: {
+    padding: 16,
+  },
 
   commentCard: {
-    backgroundColor: "#f7f7f7",
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
   },
 
-  user: { fontWeight: "800", marginBottom: 4 },
-  comment: { fontSize: 13 },
+  user: {
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+
+  comment: {
+    fontSize: 13,
+  },
 });

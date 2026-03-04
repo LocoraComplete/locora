@@ -1,10 +1,20 @@
 import { useLocalSearchParams } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useTheme } from "../../context/themecontext";
+import { colors } from "../../config/colors";
 
-export default function Place() { // Default export matches Router
+export default function Place() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { theme } = useTheme();
+  const themeColors = colors[theme];
 
-  // Dummy data, can be replaced dynamically
   const place = {
     name: "Amber Fort",
     rating: 4.6,
@@ -14,25 +24,83 @@ export default function Place() { // Default export matches Router
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: themeColors.background },
+      ]}
+    >
       <Image source={place.image} style={styles.image} />
 
       <View style={styles.content}>
-        <Text style={styles.title}>{place.name}</Text>
-        <Text style={styles.rating}>⭐ {place.rating} / 5</Text>
-        <Text style={styles.description}>{place.description}</Text>
+        <Text
+          style={[
+            styles.title,
+            { color: themeColors.text },
+          ]}
+        >
+          {place.name}
+        </Text>
+
+        <Text
+          style={[
+            styles.rating,
+            { color: themeColors.text },
+          ]}
+        >
+          ⭐ {place.rating} / 5
+        </Text>
+
+        <Text
+          style={[
+            styles.description,
+            { color: theme === "dark" ? "#bbb" : "#555" },
+          ]}
+        >
+          {place.description}
+        </Text>
 
         <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.button}>
-            <Text>360° View</Text>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {
+                borderColor: themeColors.border,
+                backgroundColor: themeColors.card,
+              },
+            ]}
+          >
+            <Text style={{ color: themeColors.text }}>
+              360° View
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button}>
-            <Text>Route</Text>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {
+                borderColor: themeColors.border,
+                backgroundColor: themeColors.card,
+              },
+            ]}
+          >
+            <Text style={{ color: themeColors.text }}>
+              Route
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.button}>
-            <Text>Chat</Text>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              {
+                borderColor: themeColors.border,
+                backgroundColor: themeColors.card,
+              },
+            ]}
+          >
+            <Text style={{ color: themeColors.text }}>
+              Chat
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -41,12 +109,28 @@ export default function Place() { // Default export matches Router
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF" },
-  image: { width: "100%", height: 250 },
-  content: { padding: 15 },
-  title: { fontSize: 22, fontWeight: "bold" },
-  rating: { marginVertical: 5, fontWeight: "bold" },
-  description: { marginVertical: 10, color: "#555", lineHeight: 20 },
+  container: {
+    flex: 1,
+  },
+  image: {
+    width: "100%",
+    height: 250,
+  },
+  content: {
+    padding: 15,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+  },
+  rating: {
+    marginVertical: 5,
+    fontWeight: "bold",
+  },
+  description: {
+    marginVertical: 10,
+    lineHeight: 20,
+  },
   buttonRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -54,7 +138,6 @@ const styles = StyleSheet.create({
   },
   button: {
     borderWidth: 1,
-    borderColor: "#CCC",
     paddingVertical: 8,
     paddingHorizontal: 15,
     borderRadius: 10,

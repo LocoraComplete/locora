@@ -14,9 +14,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE_URL } from "../../../config/api";
+import { useTheme } from "../../../context/themecontext";
+import { colors } from "../../../config/colors";
 
 export default function ExploreScreen() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const themeColors = theme === "dark" ? colors.dark : colors.light;
+
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState<"places" | "events" | "food">("places");
@@ -43,10 +48,6 @@ export default function ExploreScreen() {
         setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
         setFood(Array.isArray(foodRes.data) ? foodRes.data : []);
       } catch (err: any) {
-        console.error(
-          "Explore API Error:",
-          err?.response?.data || err.message
-        );
         setError("Failed to load data. Check backend connection.");
       } finally {
         setLoading(false);
@@ -72,12 +73,21 @@ export default function ExploreScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: themeColors.background }}
+    >
       <ScrollView style={styles.container}>
         <TextInput
           placeholder="Search locations..."
-          placeholderTextColor="#777"
-          style={styles.searchBar}
+          placeholderTextColor={theme === "dark" ? "#999" : "#777"}
+          style={[
+            styles.searchBar,
+            {
+              borderColor: themeColors.border,
+              color: themeColors.text,
+              backgroundColor: themeColors.card,
+            },
+          ]}
           value={searchText}
           onChangeText={setSearchText}
           onSubmitEditing={handleSearch}
@@ -90,34 +100,82 @@ export default function ExploreScreen() {
               key={cat}
               style={[
                 styles.categoryBox,
-                selectedCategory === cat && styles.categoryBoxSelected,
+                {
+                  backgroundColor:
+                    selectedCategory === cat
+                      ? themeColors.text
+                      : themeColors.card,
+                },
               ]}
               onPress={() => setSelectedCategory(cat as any)}
             >
-              <Text style={styles.categoryText}>{cat.toUpperCase()}</Text>
+              <Text
+                style={[
+                  styles.categoryText,
+                  {
+                    color:
+                      selectedCategory === cat
+                        ? themeColors.background
+                        : themeColors.text,
+                  },
+                ]}
+              >
+                {cat.toUpperCase()}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.sectionTitle}>
+        <Text
+          style={[
+            styles.sectionTitle,
+            { color: themeColors.text },
+          ]}
+        >
           Recommended {selectedCategory.toUpperCase()}
         </Text>
 
         {loading && (
           <ActivityIndicator
             size="large"
-            color="#FF5A5F"
+            color={themeColors.text}
             style={{ marginVertical: 20 }}
           />
         )}
 
         {!loading && error ? (
-          <Text style={{ color: "red", textAlign: "center", marginVertical: 20 }}>
+          <Text
+            style={{
+              color: "red",
+              textAlign: "center",
+              marginVertical: 20,
+            }}
+          >
             {error}
           </Text>
         ) : (
           getCategoryData().map((item) => (
-            <View key={item._id || item.id} style={styles.postCard}>
+            <TouchableOpacity
+              key={item._id || item.id}
+              style={[
+                styles.postCard,
+                {
+                  borderColor: themeColors.border,
+                  backgroundColor: themeColors.card,
+                },
+              ]}
+              onPress={() =>
+                router.push({
+                  pathname: "/explore/[id]",
+                  params: {
+                    id: item._id,
+                    name: item.Name,
+                    description: item.Description,
+                    image: item.ImageURL,
+                  },
+                })
+              }
+            >
               <Image
                 source={
                   item.ImageURL
@@ -126,13 +184,27 @@ export default function ExploreScreen() {
                 }
                 style={styles.postImage}
               />
+
               <View style={styles.postContent}>
-                <Text style={styles.postTitle}>{item.Name}</Text>
-                <Text style={styles.postDescription}>
+                <Text
+                  style={[
+                    styles.postTitle,
+                    { color: themeColors.text },
+                  ]}
+                >
+                  {item.Name}
+                </Text>
+
+                <Text
+                  style={[
+                    styles.postDescription,
+                    { color: themeColors.text },
+                  ]}
+                >
                   {item.Description}
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>
@@ -161,16 +233,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 14,
     marginHorizontal: 4,
-    backgroundColor: "#ececec",
     borderRadius: 14,
     alignItems: "center",
   },
-  categoryBoxSelected: {
-    backgroundColor: "#FF5A5F",
-  },
   categoryText: {
     fontSize: 14,
-    color: "#000",
   },
   sectionTitle: {
     fontSize: 18,
