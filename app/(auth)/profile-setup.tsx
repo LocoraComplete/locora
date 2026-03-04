@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import api from "../../config/api"; // import your API instance
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -61,26 +62,32 @@ export default function ProfileSetupScreen() {
         : undefined;
 
     const storedUser = await AsyncStorage.getItem("user");
+    if (!storedUser) return;
 
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
+    const user = JSON.parse(storedUser);
 
-      await AsyncStorage.setItem(
-        "user",
-        JSON.stringify({
-          ...user,
-          Name: name,
-          Location: location,
-          profileCompleted: true,
-          emergencyContacts: {
-            primary: formattedPrimary,
-            secondary: formattedSecondary,
-          },
-        })
+    try {
+      // Update user on backend
+      const response = await api.put(`/api/users/${user._id}/emergencyContacts`, {
+        emergencyContacts: {
+          primary: formattedPrimary,
+          secondary: formattedSecondary,
+        },
+        Name: name,
+        Location: location,
+        profileCompleted: true,
+      });
+
+      // Update AsyncStorage
+      await AsyncStorage.setItem("user", JSON.stringify(response.data));
+
+      router.replace("/(tabs)/explore");
+    } catch (err: any) {
+      Alert.alert(
+        "Error",
+        err?.response?.data?.message || "Failed to save profile. Please try again."
       );
     }
-
-    router.replace("/(tabs)/explore");
   };
 
   return (
