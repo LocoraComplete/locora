@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -16,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE_URL } from "../../../config/api";
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import api from "../../../config/api"; // ✅ use Axios instance
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -38,17 +38,21 @@ export default function ExploreScreen() {
         setLoading(true);
         setError("");
 
+        // ✅ Use api instance
         const [placesRes, eventsRes, foodRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/places`, { timeout: 8000 }),
-          axios.get(`${API_BASE_URL}/api/events`, { timeout: 8000 }),
-          axios.get(`${API_BASE_URL}/api/food`, { timeout: 8000 }),
+          api.get("/api/places"),
+          api.get("/api/events"),
+          api.get("/api/food"),
         ]);
 
         setPlaces(Array.isArray(placesRes.data) ? placesRes.data : []);
         setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
         setFood(Array.isArray(foodRes.data) ? foodRes.data : []);
       } catch (err: any) {
-        setError("Failed to load data. Check backend connection.");
+        console.error("Explore API Error:", err?.response?.data || err.message);
+        setError(
+          "Failed to load data. Make sure your mobile and PC are on the same WiFi and backend is running."
+        );
       } finally {
         setLoading(false);
       }
@@ -77,6 +81,7 @@ export default function ExploreScreen() {
       style={{ flex: 1, backgroundColor: themeColors.background }}
     >
       <ScrollView style={styles.container}>
+        {/* Search bar */}
         <TextInput
           placeholder="Search locations..."
           placeholderTextColor={theme === "dark" ? "#999" : "#777"}
@@ -94,6 +99,7 @@ export default function ExploreScreen() {
           returnKeyType="search"
         />
 
+        {/* Category selector */}
         <View style={styles.categoryContainer}>
           {["places", "events", "food"].map((cat) => (
             <TouchableOpacity
@@ -135,6 +141,7 @@ export default function ExploreScreen() {
           Recommended {selectedCategory.toUpperCase()}
         </Text>
 
+        {/* Loading */}
         {loading && (
           <ActivityIndicator
             size="large"
@@ -143,6 +150,7 @@ export default function ExploreScreen() {
           />
         )}
 
+        {/* Error */}
         {!loading && error ? (
           <Text
             style={{
@@ -154,6 +162,7 @@ export default function ExploreScreen() {
             {error}
           </Text>
         ) : (
+          // Display posts
           getCategoryData().map((item) => (
             <TouchableOpacity
               key={item._id || item.id}
@@ -164,7 +173,7 @@ export default function ExploreScreen() {
                   backgroundColor: themeColors.card,
                 },
               ]}
-              onPress={() =>
+             onPress={() =>
                 router.push({
                   pathname: "/explore/[id]",
                   params: {
