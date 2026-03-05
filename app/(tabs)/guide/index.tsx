@@ -1,6 +1,16 @@
 import { useRouter } from "expo-router";
-import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context"; 
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../../../context/themecontext";
+import { colors } from "../../../config/colors";
 
 const guides = [
   {
@@ -34,23 +44,45 @@ const guides = [
 
 export default function Guide() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header + Search */}
-      <Text style={styles.heading}>Guide Directory</Text>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: themeColors.background,
+        padding: 16,
+      }}
+    >
+      <Text style={[styles.heading, { color: themeColors.text }]}>
+        Guide Directory
+      </Text>
 
       <TextInput
-        style={styles.search}
+        style={[
+          styles.search,
+          {
+            backgroundColor: themeColors.card,
+            color: themeColors.text,
+            borderColor: themeColors.border,
+          },
+        ]}
         placeholder="Search by city or language..."
-        placeholderTextColor="#777"
+        placeholderTextColor={themeColors.secondaryText}
       />
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {guides.map((guide) => (
           <TouchableOpacity
             key={guide.id}
-            style={styles.card}
+            style={[
+              styles.card,
+              {
+                backgroundColor: themeColors.card,
+                borderColor: themeColors.border,
+              },
+            ]}
             activeOpacity={0.9}
             onPress={() =>
               router.push({
@@ -76,23 +108,46 @@ export default function Guide() {
 
             {/* Info */}
             <View style={styles.info}>
-              <Text style={styles.name}>{guide.name}</Text>
+              <Text style={[styles.name, { color: themeColors.text }]}>
+                {guide.name}
+              </Text>
 
-              <View style={{ marginBottom: 6 }}>
-                <Text style={styles.tag}>
-                  🗣 {guide.languages.join(", ")}
-                </Text>
-              </View>
+              <Text
+                style={[
+                  styles.tag,
+                  { color: themeColors.secondaryText },
+                ]}
+              >
+                🗣 {guide.languages.join(", ")}
+              </Text>
 
-              <View style={{ marginBottom: 6 }}>
-                <Text style={styles.tag}>
-                  🎖 {guide.experience} yrs Experience
-                </Text>
-              </View>
+              <Text
+                style={[
+                  styles.tag,
+                  { color: themeColors.secondaryText },
+                ]}
+              >
+                🎖 {guide.experience} yrs Experience
+              </Text>
 
               <View style={styles.footerRow}>
-                <Text style={styles.location}>{guide.location}, Rajasthan</Text>
-                <Text style={styles.profileLink}>Profile →</Text>
+                <Text
+                  style={[
+                    styles.location,
+                    { color: themeColors.tertiaryText },
+                  ]}
+                >
+                  {guide.location}, Rajasthan
+                </Text>
+
+                <Text
+                  style={[
+                    styles.profileLink,
+                    { color: themeColors.text },
+                  ]}
+                >
+                  Profile →
+                </Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -103,44 +158,39 @@ export default function Guide() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF", padding: 16 },
   heading: {
     fontSize: 22,
     fontWeight: "900",
     marginBottom: 12,
   },
   search: {
-    backgroundColor: "#F1F1F1",
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
+    borderWidth: 1,
   },
   card: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
     borderRadius: 18,
     padding: 12,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
+    borderWidth: 1,
   },
   image: { width: 90, height: 110, borderRadius: 16 },
   ratingTag: {
     position: "absolute",
     bottom: -6,
     right: -6,
-    backgroundColor: "#C97800",
+    backgroundColor: "#C97800", // accent color (can move to theme later)
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 10,
   },
   ratingText: { color: "#fff", fontWeight: "800", fontSize: 10 },
-  info: { flex: 1, marginLeft: 12, justifyContent: "center" },
+  info: { flex: 1, marginLeft: 12, justifyContent: "center", gap: 4 },
   name: { fontSize: 16, fontWeight: "800", marginBottom: 6 },
-  tag: { fontSize: 12, fontWeight: "600", color: "#444" },
+  tag: { fontSize: 12, fontWeight: "600" },
   footerRow: { flexDirection: "row", justifyContent: "space-between" },
-  location: { fontSize: 11, color: "#777" },
-  profileLink: { fontSize: 11, fontWeight: "900", color: "#C97800" },
+  location: { fontSize: 11 },
+  profileLink: { fontSize: 11, fontWeight: "900" },
 });

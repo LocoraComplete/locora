@@ -15,6 +15,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { colors } from "../../../config/colors";
+import { useTheme } from "../../../context/themecontext";
 
 export default function Room() {
   const {
@@ -33,8 +35,10 @@ export default function Room() {
 
   const router = useRouter();
   const socket = getSocket();
-
   const CHAT_ID = chatId;
+
+  const { theme } = useTheme();
+  const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   const [USER_ID, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -141,7 +145,7 @@ export default function Room() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: themeColors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       {/* HEADER */}
@@ -178,14 +182,30 @@ export default function Room() {
           return (
             <View
               key={index}
-              style={isMine ? styles.messageSent : styles.messageReceived}
+              style={[
+                isMine ? styles.messageSent : styles.messageReceived,
+                {
+                  backgroundColor: isMine
+                    ? theme === "dark"
+                      ? "#2c2c2e"
+                      : "#DCF8C6"
+                    : themeColors.card,
+                },
+              ]}
             >
               {!isMine && (
-                <Text style={styles.senderName}>
+                <Text
+                  style={[
+                    styles.senderName,
+                    { color: themeColors.text },
+                  ]}
+                >
                   {msg.SenderName || otherUserHandle || "User"}
                 </Text>
               )}
-              <Text>{msg.Text}</Text>
+              <Text style={{ color: themeColors.text }}>
+                {msg.Text}
+              </Text>
             </View>
           );
         })}
@@ -194,20 +214,41 @@ export default function Room() {
       {/* INPUT */}
       <View style={styles.inputRow}>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              borderColor: themeColors.border,
+              color: themeColors.text,
+              backgroundColor: themeColors.card,
+            },
+          ]}
           placeholder="Type a message..."
+          placeholderTextColor={theme === "dark" ? "#999" : "#666"}
           value={inputText}
           onChangeText={setInputText}
         />
-        <TouchableOpacity style={styles.sendBtn} onPress={sendMessage}>
-          <Text style={styles.sendText}>Send</Text>
+        <TouchableOpacity
+          style={[
+            styles.sendBtn,
+            { backgroundColor: themeColors.text },
+          ]}
+          onPress={sendMessage}
+        >
+          <Text
+            style={[
+              styles.sendText,
+              { color: themeColors.background },
+            ]}
+          >
+            Send
+          </Text>
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-/* STYLES UNCHANGED */
+/* STYLES */
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#FFF" },
@@ -217,7 +258,6 @@ const styles = StyleSheet.create({
   messages: { flex: 1, paddingHorizontal: 15 },
   messageReceived: {
     alignSelf: "flex-start",
-    backgroundColor: "#EAEAEA",
     padding: 10,
     borderRadius: 10,
     marginBottom: 10,
@@ -225,7 +265,6 @@ const styles = StyleSheet.create({
   },
   messageSent: {
     alignSelf: "flex-end",
-    backgroundColor: "#DCF8C6",
     padding: 10,
     borderRadius: 10,
     marginBottom: 10,
@@ -245,19 +284,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     borderTopWidth: 1,
-    borderColor: "#EEE",
   },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#CCC",
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
   sendBtn: {
     marginLeft: 10,
-    backgroundColor: "#000",
     paddingHorizontal: 20,
     borderRadius: 20,
     justifyContent: "center",

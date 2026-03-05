@@ -13,6 +13,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { colors } from "../../../config/colors";
+import { useTheme } from "../../../context/themecontext";
 
 const profileImages: Record<string, any> = {
   "1": require("@/assets/images/user1.jpg"),
@@ -35,85 +37,79 @@ export default function UserProfile() {
     location: string;
     likes: string;
     comments: string;
+    liked: string;
   }>();
+
+  const { theme } = useTheme();
+  const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   /* ================= START PRIVATE CHAT ================= */
   const startChat = async () => {
-  try {
-    console.log("Start Chat pressed");
+    try {
+      setLoading(true);
 
-    setLoading(true);
-
-    const storedUser = await AsyncStorage.getItem("user");
-    console.log("Stored user raw:", storedUser);
-
-    if (!storedUser) {
-      console.log("No stored user found");
-      Alert.alert("Please login first");
-      return;
-    }
-
-    const currentUser = JSON.parse(storedUser);
-    console.log("Parsed currentUser:", currentUser);
-    console.log("CurrentUser.UserId:", currentUser?.UserId);
-    console.log("Profile ID:", id);
-
-    if (!currentUser?.UserId) {
-      console.log("UserId missing in stored user");
-      Alert.alert("User not found");
-      return;
-    }
-
-    if (currentUser.UserId === id) {
-      console.log("Trying to chat with self");
-      Alert.alert("You cannot chat with yourself");
-      return;
-    }
-
-    console.log("Sending request to backend...");
-
-    const res = await axios.post(
-      `${API_BASE_URL}/api/chat/private`,
-      {
-        User1: currentUser.UserId,
-        User2: id,
+      const storedUser = await AsyncStorage.getItem("user");
+      if (!storedUser) {
+        Alert.alert("Please login first");
+        return;
       }
-    );
 
-    console.log("Backend response:", res.data);
+      const currentUser = JSON.parse(storedUser);
 
-    if (!res.data?.ChatId) {
-      console.log("ChatId missing in response");
-      Alert.alert("Chat creation failed");
-      return;
+      if (!currentUser?.UserId) {
+        Alert.alert("User not found");
+        return;
+      }
+
+      if (currentUser.UserId === id) {
+        Alert.alert("You cannot chat with yourself");
+        return;
+      }
+
+      const res = await axios.post(
+        `${API_BASE_URL}/api/chat/private`,
+        {
+          User1: currentUser.UserId,
+          User2: id,
+        }
+      );
+
+      if (!res.data?.ChatId) {
+        Alert.alert("Chat creation failed");
+        return;
+      }
+
+      router.push({
+        pathname: "/chat/room",
+        params: {
+          chatId: res.data.ChatId,
+          title: username,
+          isPrivate: "true",
+          otherUserId: id,
+          otherUserHandle: username,
+        },
+      });
+
+    } catch (err: any) {
+      console.log("Start chat error:", err?.response?.data || err.message);
+      Alert.alert("Unable to start chat");
+    } finally {
+      setLoading(false);
     }
-
-    console.log("Navigating to room with ChatId:", res.data.ChatId);
-
-    router.push({
-      pathname: "/chat/room",
-      params: {
-        chatId: res.data.ChatId,
-        title: username,
-        isPrivate: "true",
-        otherUserId: id,
-        otherUserHandle: username,
-      },
-    });
-
-  } catch (err: any) {
-    console.log("Start chat error:", err?.response?.data || err.message);
-    Alert.alert("Unable to start chat");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={[
+        styles.container,
+        { backgroundColor: themeColors.background },
+      ]}
+    >
       {/* Back Button */}
       <TouchableOpacity onPress={() => router.back()}>
-        <Text style={styles.back}>← Back</Text>
+        <Text style={[styles.back, { color: themeColors.text }]}>
+          ← Back
+        </Text>
       </TouchableOpacity>
 
       {/* Profile Section */}
@@ -123,27 +119,52 @@ export default function UserProfile() {
           style={styles.profilePic}
         />
 
-        <Text style={styles.username}>{username}</Text>
-        <Text style={styles.location}>{location}</Text>
+        <Text style={[styles.username, { color: themeColors.text }]}>
+          {username}
+        </Text>
 
-        <Text style={styles.bio}>
+        <Text
+          style={[
+            styles.location,
+            { color: theme === "dark" ? "#aaa" : "#777" },
+          ]}
+        >
+          {location}
+        </Text>
+
+        <Text style={[styles.bio, { color: themeColors.text }]}>
           ❤️ {likes} likes • 💬 {comments} comments
         </Text>
 
         <TouchableOpacity
-          style={styles.chatBtn}
+          style={[
+            styles.chatBtn,
+            { backgroundColor: themeColors.text },
+          ]}
           onPress={startChat}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={themeColors.background} />
           ) : (
-            <Text style={styles.chatText}>💬 Start Chat</Text>
+            <Text
+              style={[
+                styles.chatText,
+                { color: themeColors.background },
+              ]}
+            >
+              💬 Start Chat
+            </Text>
           )}
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.sectionTitle}>
+      <Text
+        style={[
+          styles.sectionTitle,
+          { color: themeColors.text },
+        ]}
+      >
         Posts by {username}
       </Text>
     </ScrollView>
@@ -153,22 +174,51 @@ export default function UserProfile() {
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 14, backgroundColor: "#fff" },
-  back: { fontSize: 16, fontWeight: "700", marginBottom: 6 },
-  profileCard: { alignItems: "center", marginTop: 6 },
-  profilePic: { width: 90, height: 90, borderRadius: 45, marginBottom: 8 },
-  username: { fontSize: 18, fontWeight: "700" },
-  location: { fontSize: 13, color: "#777", marginTop: 2 },
-  bio: { marginTop: 6, textAlign: "center" },
+  container: {
+    flex: 1,
+    padding: 14,
+  },
+  back: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 6,
+  },
+  profileCard: {
+    alignItems: "center",
+    marginTop: 6,
+  },
+  profilePic: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: 8,
+  },
+  username: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  location: {
+    fontSize: 13,
+    marginTop: 2,
+  },
+  bio: {
+    marginTop: 6,
+    textAlign: "center",
+  },
   chatBtn: {
     marginTop: 12,
-    backgroundColor: "#FF5A5F",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 22,
     minWidth: 140,
     alignItems: "center",
   },
-  chatText: { color: "#fff", fontWeight: "700" },
-  sectionTitle: { marginTop: 18, fontSize: 16, fontWeight: "700" },
+  chatText: {
+    fontWeight: "700",
+  },
+  sectionTitle: {
+    marginTop: 18,
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });
