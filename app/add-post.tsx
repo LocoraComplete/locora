@@ -27,8 +27,8 @@ export default function AddPost() {
     return;
   }
 
-  const result = await ImagePicker.launchImageLibraryAsync({
-  mediaTypes: ["images"],
+ const result = await ImagePicker.launchImageLibraryAsync({
+  mediaTypes: ImagePicker.MediaTypeOptions.Images,
   allowsEditing: true,
   quality: 0.8,
 });
@@ -68,7 +68,7 @@ formData.append("image", {
   uri: image,
   name: filename,
   type,
-} as unknown as string);
+} as any);
 
       const response = await api.post("/api/posts/create", formData, {
   headers: { "Content-Type": "multipart/form-data" },
@@ -78,7 +78,7 @@ formData.append("image", {
       console.log("POST RESPONSE:", response.data);
 
       Alert.alert("Post created successfully ✅");
-      router.replace("/(tabs)/profile");
+      router.push("/(tabs)/profile");
     } catch (err: any) {
       console.log("POST ERROR:", err?.response?.data || err.message);
       Alert.alert("Error creating post");

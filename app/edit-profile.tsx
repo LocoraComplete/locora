@@ -65,72 +65,60 @@ export default function EditProfile() {
 };
 
   const handleSave = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const storedUser = await AsyncStorage.getItem("user");
-
-      if (!storedUser) {
-        Alert.alert("Error", "User not found. Please login again.");
-        return;
-      }
-
-      const parsedUser = JSON.parse(storedUser);
-      const userId = parsedUser.UserId;
-
-      const formData = new FormData();
-
-      formData.append("name", name);
-      formData.append("username", username);
-      formData.append("pronouns", pronouns);
-      formData.append("bio", bio);
-
-      // If new image selected
-      if (profilePic/* && profilePic.startsWith("file")*/) {
-        formData.append("profilePic", {
-          uri: profilePic,
-          name: "profile.jpg",
-          type: "image/jpeg",
-        } as any);
-      }
-
-      const response = await api.put(
-        `/api/users/update-profile/${userId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      
-     
- 
-
-      const updatedUser = {
-  ...parsedUser,
-  ...response.data,
-  profilePic: response.data.profilePic || parsedUser.profilePic, // make sure profilePic is included
-};
-
-await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
-
-      Alert.alert("Success", "Saved changes successfully ✅", [
-        {
-          text: "OK",
-          onPress: () => router.back(),
-        },
-      ]);
-    } catch (error: any) {
-      console.log("Update Error:", error?.response?.data || error);
-      Alert.alert(
-        "Error",
-        error?.response?.data?.message || "Something went wrong"
-      );
-    } finally {
-      setLoading(false);
+    const storedUser = await AsyncStorage.getItem("user");
+    if (!storedUser) {
+      Alert.alert("Error", "User not found. Please login again.");
+      return;
     }
-  };
+
+    const parsedUser = JSON.parse(storedUser);
+    const userId = parsedUser.UserId;
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("username", username);
+    formData.append("pronouns", pronouns);
+    formData.append("bio", bio);
+
+    if (profilePic) {
+      formData.append("profilePic", {
+        uri: profilePic,
+        name: "profile.jpg",
+        type: "image/jpeg",
+      } as any);
+    }
+
+    const response = await api.put(
+      `/api/users/update-profile/${userId}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    // ✅ Important: local image fallback
+    const updatedUser = {
+      ...parsedUser,
+      ...response.data,
+      profilePic: profilePic || parsedUser.profilePic, // local uri fallback
+    };
+
+    await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+
+    Alert.alert("Success", "Saved changes successfully ✅", [
+      {
+        text: "OK",
+        onPress: () => router.back(), // back to profile
+      },
+    ]);
+  } catch (error: any) {
+    console.log("Update Error:", error?.response?.data || error);
+    Alert.alert("Error", error?.response?.data?.message || "Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>
