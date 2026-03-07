@@ -8,12 +8,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { colors } from "../../../config/colors";
 import { useTheme } from "../../../context/themecontext";
@@ -150,16 +151,23 @@ export default function Room() {
     >
       {/* HEADER */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={openGroupInfo}>
-          <Text style={styles.headerTitle}>
-            {isPrivate === "true" ? otherUserHandle : title}
-          </Text>
-          {isPrivate !== "true" && (
-            <Text style={styles.headerSubtitle}>
-              Tap to view group info
-            </Text>
-          )}
-        </TouchableOpacity>
+        {isPrivate === "true" ? (
+          <Pressable
+            onPress={() => {
+              if (otherUserId) {
+                router.push(`/profile/${otherUserId}`);
+              }
+            }}
+          >
+            <Text style={styles.headerTitle}>{otherUserHandle}</Text>
+            <Text style={styles.headerSubtitle}>Tap to view profile</Text>
+          </Pressable>
+        ) : (
+          <TouchableOpacity onPress={openGroupInfo}>
+            <Text style={styles.headerTitle}>{title}</Text>
+            <Text style={styles.headerSubtitle}>Tap to view group info</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* MESSAGES */}

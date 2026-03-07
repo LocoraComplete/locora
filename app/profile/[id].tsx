@@ -5,12 +5,13 @@ import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -34,17 +35,12 @@ export default function PublicProfile() {
 
     const loadData = async () => {
       try {
-        // Load current logged in user
         const storedUser = await AsyncStorage.getItem("user");
         if (storedUser) {
           setCurrentUser(JSON.parse(storedUser));
         }
 
-        // Fetch viewed user profile
-        const res = await axios.get(
-          `${API_BASE_URL}/api/users/${id}`
-        );
-
+        const res = await axios.get(`${API_BASE_URL}/api/users/${id}`);
         setUser(res.data);
       } catch (error: any) {
         Alert.alert(
@@ -59,7 +55,7 @@ export default function PublicProfile() {
     loadData();
   }, [id]);
 
-  /* ================= IF VIEWING OWN PROFILE ================= */
+  /* ================= REDIRECT IF VIEWING OWN PROFILE ================= */
   useEffect(() => {
     if (currentUser && id === currentUser.UserId) {
       router.replace("/(tabs)/profile");
@@ -67,15 +63,25 @@ export default function PublicProfile() {
   }, [currentUser]);
 
   if (loading) {
-    return <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }} />;
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <ActivityIndicator size="large" color="#000" />
+        <Text style={{ marginTop: 10 }}>Loading...</Text>
+      </SafeAreaView>
+    );
   }
 
-  if (!user) return null;
+  if (!user) {
+    return (
+      <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
+        <Text>User not found</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-
         {/* HEADER */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
@@ -89,7 +95,6 @@ export default function PublicProfile() {
 
         {/* PROFILE ROW */}
         <View style={styles.profileRow}>
-
           {/* AVATAR */}
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarBorder}>
@@ -105,12 +110,10 @@ export default function PublicProfile() {
               <Text style={styles.statNumber}>0</Text>
               <Text style={styles.statLabel}>Posts</Text>
             </View>
-
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
-
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
               <Text style={styles.statLabel}>Following</Text>
@@ -128,9 +131,30 @@ export default function PublicProfile() {
         <View style={styles.buttonRow}>
           <TouchableOpacity
             style={styles.messageButton}
-            onPress={() => {
-              // You can later connect this to open private chat
-              Alert.alert("Coming Soon", "Start private chat feature");
+            onPress={async () => {
+              try {
+                if (!currentUser) return;
+
+                const res = await axios.post(`${API_BASE_URL}/api/chat/private`, {
+                  User1: currentUser.UserId,
+                  User2: user.UserId,
+                });
+
+                const chat = res.data;
+
+                router.push({
+                  pathname: "/chat/room",
+                  params: {
+                    chatId: chat.ChatId,
+                    isPrivate: "true",
+                    otherUserId: user.UserId,
+                    otherUserHandle: user.Handle,
+                    title: user.Handle,
+                  },
+                });
+              } catch (err) {
+                Alert.alert("Failed to start chat");
+              }
             }}
           >
             <Text style={styles.messageText}>Message</Text>
@@ -139,119 +163,103 @@ export default function PublicProfile() {
 
         {/* POSTS PLACEHOLDER */}
         <View style={styles.noPostsContainer}>
-          <Text style={styles.noPostsText}>
-            No posts yet
-          </Text>
+          <Text style={styles.noPostsText}>No posts yet</Text>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 /* ================= STYLES ================= */
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 16,
   },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
   },
-
   username: {
     fontSize: 18,
     fontWeight: "900",
   },
-
   profileRow: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 16,
   },
-
   avatarWrapper: {
     position: "relative",
   },
-
   avatarBorder: {
-    borderWidth: 3,
-    borderColor: "#F4B400",
+    borderWidth: 2,
+    borderColor: "#ccc",
     borderRadius: 50,
-    padding: 3,
+    padding: 2,
   },
-
   avatarPlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "#eee",
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f1f1f1",
   },
-
   statsRow: {
-    flex: 1,
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
+    marginLeft: 20,
+    flex: 1,
   },
-
   statItem: {
     alignItems: "center",
   },
-
   statNumber: {
-    fontWeight: "900",
+    fontWeight: "700",
     fontSize: 16,
   },
-
   statLabel: {
     fontSize: 12,
     color: "#555",
   },
-
   bioBox: {
-    marginTop: 10,
+    marginVertical: 16,
   },
-
   name: {
-    fontWeight: "900",
-    fontSize: 15,
+    fontSize: 20,
+    fontWeight: "700",
   },
-
   bio: {
-    marginTop: 4,
+    fontSize: 14,
     color: "#555",
+    marginTop: 4,
   },
-
   buttonRow: {
-    marginTop: 15,
+    flexDirection: "row",
+    justifyContent: "center",
+    marginVertical: 12,
   },
-
   messageButton: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 25,
+    backgroundColor: "#4F46E5",
+    borderRadius: 12,
   },
-
   messageText: {
+    color: "#fff",
     fontWeight: "600",
   },
-
   noPostsContainer: {
+    justifyContent: "center",
     alignItems: "center",
     marginTop: 40,
   },
-
   noPostsText: {
-    color: "#777",
+    color: "#888",
+    fontSize: 14,
   },
 });

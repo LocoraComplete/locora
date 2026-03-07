@@ -1,15 +1,15 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-  View,
-  Text,
   Image,
   ScrollView,
   StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import { useTheme } from "../../../context/themecontext";
 
 export default function PostDetails() {
   const { id, name, description, image } = useLocalSearchParams();
@@ -18,23 +18,24 @@ export default function PostDetails() {
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
+  const imageSource =
+    image && typeof image === "string"
+      ? { uri: image }
+      : require("@/assets/images/amber-fort.jpg");
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: themeColors.background }}
     >
       <ScrollView>
-        <Image source={{ uri: image as string }} style={styles.image} />
+        <Image source={imageSource} style={styles.image} />
 
         <View style={{ padding: 16 }}>
-          <Text
-            style={[styles.title, { color: themeColors.text }]}
-          >
+          <Text style={[styles.title, { color: themeColors.text }]}>
             {name}
           </Text>
 
-          <Text
-            style={[styles.description, { color: themeColors.text }]}
-          >
+          <Text style={[styles.description, { color: themeColors.text }]}>
             {description}
           </Text>
 
@@ -67,7 +68,9 @@ export default function PostDetails() {
               styles.secondaryButton,
               {
                 backgroundColor:
-                  theme === "dark" ? themeColors.card : themeColors.border,
+                  theme === "dark"
+                    ? themeColors.card
+                    : themeColors.border,
               },
             ]}
             onPress={() =>

@@ -1,28 +1,30 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
-  View,
+  Alert,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
-  Alert,
+  View,
 } from "react-native";
-import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
 import { useLanguage } from "../../context/languagecontext";
-import { useLocalSearchParams } from "expo-router"; // ✅ correct hook
+import { useTheme } from "../../context/themecontext";
 
 export default function ChangePassword() {
   const { theme } = useTheme();
   const themeColors = colors[theme];
   const { t } = useLanguage();
 
-  // ✅ Get userId from route params
   const { userId } = useLocalSearchParams<{ userId: string }>();
 
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleChangePassword = async () => {
@@ -31,7 +33,6 @@ export default function ChangePassword() {
       return;
     }
 
-    // 1️⃣ Frontend validation
     if (!oldPassword || !newPassword) {
       Alert.alert(t("error"), t("fillAllFields"));
       return;
@@ -52,9 +53,8 @@ export default function ChangePassword() {
     try {
       setLoading(true);
 
-      // 2️⃣ Verify old password
       const response = await fetch(
-        `https://locora-backend.onrender.com/api/users/${userId}/check-password`,
+        `http://10.115.189.72:5000/api/users/${userId}/check-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -62,8 +62,8 @@ export default function ChangePassword() {
         }
       );
 
-      let data: any = null;
       const text = await response.text();
+      let data: any = null;
       try {
         data = JSON.parse(text);
       } catch {
@@ -79,9 +79,8 @@ export default function ChangePassword() {
         return;
       }
 
-      // 3️⃣ Update password
       const updateResponse = await fetch(
-        `https://locora-backend.onrender.com/api/users/${userId}/update-password`,
+        `http://10.115.189.72:5000/api/users/${userId}/update-password`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -89,8 +88,8 @@ export default function ChangePassword() {
         }
       );
 
-      let updateData: any = null;
       const updateText = await updateResponse.text();
+      let updateData: any = null;
       try {
         updateData = JSON.parse(updateText);
       } catch {
@@ -123,41 +122,61 @@ export default function ChangePassword() {
         {t("oldPassword") || "Old Password"}
       </Text>
 
-      <TextInput
-        secureTextEntry
-        value={oldPassword}
-        onChangeText={setOldPassword}
-        placeholder={t("enterOldPassword") || "Enter old password"}
+      <View
         style={[
-          styles.input,
+          styles.passwordContainer,
           {
-            backgroundColor: theme === "dark" ? "#1c1c1e" : "#f7f7f7",
             borderColor: theme === "dark" ? "#333" : "#ddd",
-            color: themeColors.text,
+            backgroundColor: theme === "dark" ? "#1c1c1e" : "#f7f7f7",
           },
         ]}
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-      />
+      >
+        <TextInput
+          style={[styles.passwordInput, { color: themeColors.text }]}
+          value={oldPassword}
+          onChangeText={setOldPassword}
+          placeholder={t("enterOldPassword") || "Enter old password"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          secureTextEntry={!showOldPassword}
+        />
+        <TouchableOpacity onPress={() => setShowOldPassword(!showOldPassword)}>
+          <Ionicons
+            name={showOldPassword ? "eye-outline" : "eye-off-outline"}
+            size={22}
+            color={themeColors.text}
+          />
+        </TouchableOpacity>
+      </View>
 
       <Text style={[styles.label, { color: theme === "dark" ? "#bbb" : "#555" }]}>
         {t("newPassword") || "New Password"}
       </Text>
 
-      <TextInput
-        secureTextEntry
-        value={newPassword}
-        onChangeText={setNewPassword}
-        placeholder={t("enterNewPassword") || "Enter new password"}
+      <View
         style={[
-          styles.input,
+          styles.passwordContainer,
           {
-            backgroundColor: theme === "dark" ? "#1c1c1e" : "#f7f7f7",
             borderColor: theme === "dark" ? "#333" : "#ddd",
-            color: themeColors.text,
+            backgroundColor: theme === "dark" ? "#1c1c1e" : "#f7f7f7",
           },
         ]}
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-      />
+      >
+        <TextInput
+          style={[styles.passwordInput, { color: themeColors.text }]}
+          value={newPassword}
+          onChangeText={setNewPassword}
+          placeholder={t("enterNewPassword") || "Enter new password"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          secureTextEntry={!showNewPassword}
+        />
+        <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
+          <Ionicons
+            name={showNewPassword ? "eye-outline" : "eye-off-outline"}
+            size={22}
+            color={themeColors.text}
+          />
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: theme === "dark" ? "#fff" : "#000" }]}
@@ -175,7 +194,15 @@ export default function ChangePassword() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
   label: { fontSize: 14, marginBottom: 6 },
-  input: { borderWidth: 1, borderRadius: 10, padding: 12, marginBottom: 20 },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginBottom: 20,
+  },
+  passwordInput: { flex: 1, paddingVertical: 12 },
   button: { padding: 15, borderRadius: 10, alignItems: "center" },
   buttonText: { fontWeight: "600" },
 });

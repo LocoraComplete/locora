@@ -3,7 +3,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -14,8 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE_URL } from "../../../config/api";
-import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import { useTheme } from "../../../context/themecontext";
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -29,6 +28,12 @@ export default function ExploreScreen() {
   const [places, setPlaces] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [food, setFood] = useState<any[]>([]);
+
+  const [filteredPlaces, setFilteredPlaces] = useState<any[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
+  const [filteredFood, setFilteredFood] = useState<any[]>([]);
+
+  const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,9 +49,17 @@ export default function ExploreScreen() {
           axios.get(`${API_BASE_URL}/api/food`, { timeout: 8000 }),
         ]);
 
-        setPlaces(Array.isArray(placesRes.data) ? placesRes.data : []);
-        setEvents(Array.isArray(eventsRes.data) ? eventsRes.data : []);
-        setFood(Array.isArray(foodRes.data) ? foodRes.data : []);
+        const p = Array.isArray(placesRes.data) ? placesRes.data : [];
+        const e = Array.isArray(eventsRes.data) ? eventsRes.data : [];
+        const f = Array.isArray(foodRes.data) ? foodRes.data : [];
+
+        setPlaces(p);
+        setEvents(e);
+        setFood(f);
+
+        setFilteredPlaces(p);
+        setFilteredEvents(e);
+        setFilteredFood(f);
       } catch (err: any) {
         setError("Failed to load data. Check backend connection.");
       } finally {
@@ -57,18 +70,57 @@ export default function ExploreScreen() {
     fetchData();
   }, []);
 
-  const handleSearch = () => {
-    if (searchText.trim().toLowerCase() === "jaipur") {
-      router.push("/explore/jaipur");
-    } else {
-      Alert.alert("Not found", "Try typing 'Jaipur'");
-    }
+  const fuzzyMatch = (text: string, query: string) => {
+    return text.toLowerCase().includes(query.toLowerCase());
   };
 
+  const performSearch = (query: string) => {
+    if (!query.trim()) {
+      setFilteredPlaces(places);
+      setFilteredEvents(events);
+      setFilteredFood(food);
+      setNotFound(false);
+      return;
+    }
+
+    const p = places.filter((item) =>
+      fuzzyMatch(item.Name || "", query) ||
+      fuzzyMatch(item.Location || "", query)
+    );
+
+    const e = events.filter((item) =>
+      fuzzyMatch(item.Name || "", query) ||
+      fuzzyMatch(item.Description || "", query)
+    );
+
+    const f = food.filter((item) =>
+      fuzzyMatch(item.Name || "", query) ||
+      fuzzyMatch(item.Description || "", query)
+    );
+
+    if (p.length === 0 && e.length === 0 && f.length === 0) {
+      setNotFound(true);
+    } else {
+      setNotFound(false);
+    }
+
+    setFilteredPlaces(p);
+    setFilteredEvents(e);
+    setFilteredFood(f);
+  };
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      performSearch(searchText);
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [searchText, places, events, food]);
+
   const getCategoryData = () => {
-    if (selectedCategory === "places") return places;
-    if (selectedCategory === "events") return events;
-    if (selectedCategory === "food") return food;
+    if (selectedCategory === "places") return filteredPlaces;
+    if (selectedCategory === "events") return filteredEvents;
+    if (selectedCategory === "food") return filteredFood;
     return [];
   };
 
@@ -90,8 +142,6 @@ export default function ExploreScreen() {
           ]}
           value={searchText}
           onChangeText={setSearchText}
-          onSubmitEditing={handleSearch}
-          returnKeyType="search"
         />
 
         <View style={styles.categoryContainer}>
@@ -134,6 +184,18 @@ export default function ExploreScreen() {
         >
           Recommended {selectedCategory.toUpperCase()}
         </Text>
+
+        {notFound && (
+          <Text
+            style={{
+              textAlign: "center",
+              marginBottom: 12,
+              color: themeColors.text,
+            }}
+          >
+            No Results Found
+          </Text>
+        )}
 
         {loading && (
           <ActivityIndicator

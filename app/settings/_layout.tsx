@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
-import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import { useTheme } from "../../context/themecontext";
 
 export default function SettingsLayout() {
   const { theme } = useTheme();
@@ -76,7 +76,7 @@ export default function SettingsLayout() {
         options={{ title: "Log Out" }}
       />
       <Stack.Screen
-        name="delete-account"
+        name="delete"
         options={{ title: "Delete Account" }}
       />
     </Stack>
