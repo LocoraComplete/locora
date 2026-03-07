@@ -2,7 +2,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import api from "../../config/api";
-
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+import { FlatList} from "react-native";
 import {
   View,
   Text,
@@ -17,11 +19,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import { Image } from "react-native";
 
 type User = {
   UserId: string;
   Handle: string;
   Name: string;
+  Bio?: string;           
+  Pronouns?: string;      
+  profilePic?: string | null; 
+  FollowersCount?: number;  // add this
+  FollowingCount?: number;  // add this
 };
 
 export default function Profile() {
@@ -31,28 +39,48 @@ export default function Profile() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<{ PostId: string; ImageUrl: string }[]>([]);
+  useFocusEffect(
+  useCallback(() => {
+    let isActive = true;
 
-  useEffect(() => {
     const loadUser = async () => {
       try {
         const storedUser = await AsyncStorage.getItem("user");
-
-        if (!storedUser) {
-          router.replace("/(auth)/login");
-          return;
+        if (storedUser && isActive) {
+          const parsedUser = JSON.parse(storedUser);
+          console.log("Parsed user:", parsedUser); // ✅ verify latest data
+          setUser(parsedUser);
         }
-
-        const parsedUser: User = JSON.parse(storedUser);
-        setUser(parsedUser);
       } catch (error) {
         console.log("Error loading user:", error);
       } finally {
-        setLoading(false);
+        if (isActive) setLoading(false);
       }
     };
 
     loadUser();
-  }, []);
+
+    return () => {
+      isActive = false;
+    };
+  }, [])
+);
+  // ✅ Fetch posts for this user
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!user) return;
+
+      try {
+        const res = await api.get(`/api/posts/user/${user.UserId}`);
+        setPosts(res.data); // save posts in state
+      } catch (err) {
+        console.log("Error fetching posts:", err);
+      }
+    };
+
+    fetchPosts();
+  }, [user]); 
 
   if (loading)
     return (
@@ -96,40 +124,39 @@ export default function Profile() {
         {/* PROFILE ROW */}
         <View style={styles.profileRow}>
           {/* AVATAR */}
-          <View style={styles.avatarWrapper}>
-            <View
-              style={[
-                styles.avatarBorder,
-                { borderColor: themeColors.text },
-              ]}
-            >
-              <View
-                style={[
-                  styles.avatarPlaceholder,
-                  { backgroundColor: themeColors.card },
-                ]}
-              >
-                <Ionicons
-                  name="person"
-                  size={40}
-                  color={themeColors.secondaryText}
-                />
-              </View>
-            </View>
+<View style={styles.avatarWrapper}>
+  <View
+    style={[styles.avatarBorder, { borderColor: themeColors.text }]}
+  >
+    {user.profilePic ? (
+      <Image
+        source={{ uri: user.profilePic }}
+        style={styles.avatarPlaceholder} // circle size same as placeholder
+      />
+    ) : (
+      <View
+        style={[styles.avatarPlaceholder, { backgroundColor: themeColors.card }]}
+      >
+        <Ionicons
+          name="person"
+          size={40}
+          color={themeColors.secondaryText}
+        />
+      </View>
+    )}
+  </View>
 
-            <View
-              style={[
-                styles.plusIcon,
-                { backgroundColor: themeColors.text },
-              ]}
-            >
-              <Ionicons
-                name="add"
-                size={16}
-                color="#fff"
-              />
-            </View>
-          </View>
+  {/* Plus icon */}
+  <View
+    style={[styles.plusIcon, { backgroundColor: themeColors.text }]}
+  >
+    <Ionicons
+      name="add"
+      size={16}
+      color="#fff"
+    />
+  </View>
+</View>
 
           {/* STATS */}
           <View style={styles.statsRow}>
@@ -158,26 +185,16 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* NAME + BIO */}
-        <View style={styles.bioBox}>
-          <Text
-            style={[
-              styles.name,
-              { color: themeColors.text },
-            ]}
-          >
-            {user.Name}
-          </Text>
+       {/* NAME + BIO */}
+<View style={styles.bioBox}>
+  <Text style={[styles.name, { color: themeColors.text }]}>
+    {user.Name}
+  </Text>
 
-          <Text
-            style={[
-              styles.bio,
-              { color: themeColors.secondaryText },
-            ]}
-          >
-            Welcome to Locora 🌍
-          </Text>
-        </View>
+  <Text style={[styles.bio, { color: themeColors.secondaryText }]}>
+    {user.Bio || "Welcome to Locora 🌍"}
+  </Text>
+</View>
 
         {/* BUTTONS */}
         <View style={styles.buttonRow}>
@@ -189,7 +206,7 @@ export default function Profile() {
                 backgroundColor: themeColors.card,
               },
             ]}
-            onPress={() => router.push("/profile")}
+            onPress={() => router.push("/edit-profile")}
           >
             <Text
               style={[
@@ -202,36 +219,44 @@ export default function Profile() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.outlineButton,
-              {
-                borderColor: themeColors.border,
-                backgroundColor: themeColors.card,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                { color: themeColors.text },
-              ]}
-            >
-              Add Post
-            </Text>
-          </TouchableOpacity>
+  style={[styles.outlineButton, {
+    borderColor: themeColors.border,
+    backgroundColor: themeColors.card,
+  }]}
+  onPress={() => router.push("/add-post")} // <-- add this
+>
+  <Text style={[styles.buttonText, { color: themeColors.text }]}>
+    Add Post
+  </Text>
+</TouchableOpacity>
         </View>
 
         {/* NO POSTS */}
-        <View style={styles.noPostsContainer}>
-          <Text
-            style={[
-              styles.noPostsText,
-              { color: themeColors.secondaryText },
-            ]}
-          >
-            No posts yet
-          </Text>
-        </View>
+      {posts.length === 0 ? (
+  <View style={styles.noPostsContainer}>
+    <Text style={[styles.noPostsText, { color: themeColors.secondaryText }]}>
+      No posts yet
+    </Text>
+  </View>
+) : (
+  <FlatList
+    data={posts}
+    keyExtractor={(item) => item.PostId}
+    numColumns={3} // 3 posts per row
+    contentContainerStyle={{ marginTop: 20 }}
+    columnWrapperStyle={{ justifyContent: "space-between", marginBottom: 8 }}
+    renderItem={({ item }) => (
+      <Image
+        source={{ uri: item.ImageUrl }}
+        style={{
+          width: 110,  // adjust size according to padding/spacing
+          height: 110,
+          borderRadius: 8,
+        }}
+      />
+    )}
+  />
+)}
       </ScrollView>
     </SafeAreaView>
   );
@@ -329,3 +354,6 @@ const styles = StyleSheet.create({
   },
   noPostsText: {},
 });
+
+
+

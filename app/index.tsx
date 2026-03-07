@@ -37,14 +37,9 @@ export default function Index() {
         LOCORA
       </Text>
 
-      <Text
-        style={[
-          styles.subtitle,
-          { color: themeColors.secondaryText },
-        ]}
-      >
-        {t("tagline")}
-      </Text>
+     <Text style={[styles.subtitle, { color: themeColors.secondaryText }]}>
+  {t("tagline") ?? ""}
+</Text>
     </View>
   );
 }

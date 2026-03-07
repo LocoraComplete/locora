@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import * as Location from "expo-location";
+
 import {
   Alert,
   StyleSheet,
@@ -10,7 +12,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Location from "expo-location";
+
 import api from "../../config/api";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
@@ -30,7 +32,7 @@ export default function Login() {
     return emailRegex.test(email);
   };
 
-  const requestLocationPermission = async () => {
+   const requestLocationPermission = async () => {
     const { status } =
       await Location.requestForegroundPermissionsAsync();
 
@@ -63,6 +65,17 @@ export default function Login() {
         Email: trimmedEmail,
         Password: password,
       });
+
+      console.log("✅ Login response:", res.data);
+
+     await AsyncStorage.setItem(
+  "user",
+  JSON.stringify(res.data)
+);
+
+      Alert.alert("Success", `Welcome ${res.data.Name}`);
+
+      router.replace("/explore");
 
       await AsyncStorage.setItem("user", JSON.stringify(res.data));
 

@@ -129,6 +129,7 @@ export default function ExploreScreen() {
       style={{ flex: 1, backgroundColor: themeColors.background }}
     >
       <ScrollView style={styles.container}>
+        {/* Search bar */}
         <TextInput
           placeholder="Search locations..."
           placeholderTextColor={theme === "dark" ? "#999" : "#777"}
@@ -144,6 +145,7 @@ export default function ExploreScreen() {
           onChangeText={setSearchText}
         />
 
+        {/* Category selector */}
         <View style={styles.categoryContainer}>
           {["places", "events", "food"].map((cat) => (
             <TouchableOpacity
@@ -205,6 +207,7 @@ export default function ExploreScreen() {
           />
         )}
 
+        {/* Error */}
         {!loading && error ? (
           <Text
             style={{
@@ -216,6 +219,7 @@ export default function ExploreScreen() {
             {error}
           </Text>
         ) : (
+          // Display posts
           getCategoryData().map((item) => (
             <TouchableOpacity
               key={item._id || item.id}
@@ -226,7 +230,7 @@ export default function ExploreScreen() {
                   backgroundColor: themeColors.card,
                 },
               ]}
-              onPress={() =>
+             onPress={() =>
                 router.push({
                   pathname: "/explore/[id]",
                   params: {
