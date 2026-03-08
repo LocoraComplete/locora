@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "extra": {
-      "apiUrl": "http://192.168.174.111:5000"
+      "apiUrl": "https://locora-backend.onrender.com"
     },
 
     "ios": {
