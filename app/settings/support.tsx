@@ -19,19 +19,62 @@ export default function ContactSupport() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
-  const handleSubmit = () => {
+  // ✅ Email validation
+  const validateEmail = (email: string) => {
+    const regex = /^\S+@\S+\.\S+$/;
+    return regex.test(email);
+  };
+
+  const handleSubmit = async () => {
     if (!email || !message) {
       Alert.alert("Incomplete", "Please fill in all fields.");
       return;
     }
 
-    Alert.alert(
-      "Submitted",
-      "Your message has been received. Our support team will respond within 24–48 hours."
-    );
+    if (!validateEmail(email)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
 
-    setEmail("");
-    setMessage("");
+    if (message.trim().length < 10) {
+      Alert.alert(
+        "Issue Too Short",
+        "Please describe your issue in a little more detail."
+      );
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://192.168.174.111:5000/api/support/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            issue: message.trim(),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert(
+          "Submitted",
+          "Your message has been received. Our support team will respond within 24–48 hours."
+        );
+
+        setEmail("");
+        setMessage("");
+      } else {
+        Alert.alert("Error", data.message || "Could not submit request.");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Could not connect to support server.");
+    }
   };
 
   return (

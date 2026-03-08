@@ -6,8 +6,7 @@ import { useLanguage } from "../../context/languagecontext";
 
 export default function LanguageScreen() {
   const { theme } = useTheme();
-  const themeColors =
-    theme === "dark" ? colors.dark : colors.light;
+  const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   const { language, setLanguage, t } = useLanguage();
 
@@ -19,14 +18,16 @@ export default function LanguageScreen() {
         {t("language")}
       </Text>
 
+      {/* English */}
       <TouchableOpacity
         style={[
           styles.option,
           {
-            backgroundColor:
+            backgroundColor: themeColors.card,
+            borderColor:
               language === "en"
                 ? themeColors.text
-                : themeColors.card,
+                : themeColors.border,
           },
         ]}
         onPress={() => setLanguage("en")}
@@ -35,10 +36,8 @@ export default function LanguageScreen() {
           style={[
             styles.optionText,
             {
-              color:
-                language === "en"
-                  ? "#fff"
-                  : themeColors.text,
+              color: themeColors.text,
+              fontWeight: language === "en" ? "700" : "600",
             },
           ]}
         >
@@ -46,14 +45,16 @@ export default function LanguageScreen() {
         </Text>
       </TouchableOpacity>
 
+      {/* Hindi */}
       <TouchableOpacity
         style={[
           styles.option,
           {
-            backgroundColor:
+            backgroundColor: themeColors.card,
+            borderColor:
               language === "hi"
                 ? themeColors.text
-                : themeColors.card,
+                : themeColors.border,
           },
         ]}
         onPress={() => setLanguage("hi")}
@@ -62,10 +63,8 @@ export default function LanguageScreen() {
           style={[
             styles.optionText,
             {
-              color:
-                language === "hi"
-                  ? "#fff"
-                  : themeColors.text,
+              color: themeColors.text,
+              fontWeight: language === "hi" ? "700" : "600",
             },
           ]}
         >
@@ -90,9 +89,9 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     marginBottom: 15,
+    borderWidth: 1,
   },
   optionText: {
     fontSize: 16,
-    fontWeight: "600",
   },
 });
