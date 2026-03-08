@@ -37,7 +37,7 @@ export default function EditProfile() {
         setUsername(parsedUser.Handle || "");
         setPronouns(parsedUser.Pronouns || "");
         setBio(parsedUser.Bio || "");
-        setProfilePic(parsedUser.ProfilePic || null);
+        setProfilePic(parsedUser.profilePic || null);
       }
     };
 
@@ -97,21 +97,17 @@ export default function EditProfile() {
       { headers: { "Content-Type": "multipart/form-data" } }
     );
 
-    // ✅ Important: local image fallback
-    const updatedUser = {
-      ...parsedUser,
-      ...response.data,
-      profilePic: profilePic || parsedUser.profilePic, // local uri fallback
-    };
+    // Update AsyncStorage
+   const updatedUser = {
+  ...parsedUser,
+  ...response.data,
+  profilePic: profilePic ?? parsedUser.profilePic,
+};
 
     await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
 
-    Alert.alert("Success", "Saved changes successfully ✅", [
-      {
-        text: "OK",
-        onPress: () => router.back(), // back to profile
-      },
-    ]);
+    // Go back to Profile screen
+    router.back();
   } catch (error: any) {
     console.log("Update Error:", error?.response?.data || error);
     Alert.alert("Error", error?.response?.data?.message || "Something went wrong");
@@ -130,9 +126,9 @@ export default function EditProfile() {
           {profilePic ? (
   <Image
     source={{
-      uri: profilePic.startsWith("file")
-        ? profilePic // ✅ local image
-        : `${api.defaults.baseURL}${profilePic}`, // ✅ server image
+    uri: profilePic.startsWith("file")
+  ? profilePic
+  : `${api.defaults.baseURL}${profilePic}?t=${Date.now()}`, // ✅ server image
     }}
     style={styles.profileImage}
   />

@@ -25,6 +25,8 @@ export default function Signup() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [primaryContact, setPrimaryContact] = useState("");   // ✅ new
+  const [secondaryContact, setSecondaryContact] = useState(""); // ✅ new
   const [secure1, setSecure1] = useState(true);
   const [secure2, setSecure2] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -44,6 +46,12 @@ export default function Signup() {
     if (phone.length !== 10)
       return Alert.alert("Error", "Phone number must be exactly 10 digits");
 
+    if (!primaryContact.match(/^\d{10}$/))
+      return Alert.alert("Error", "Primary contact must be 10 digits");
+
+    if (secondaryContact && !secondaryContact.match(/^\d{10}$/))
+      return Alert.alert("Error", "Secondary contact must be 10 digits");
+
     if (password.length < 6)
       return Alert.alert("Error", "Password must be at least 6 characters");
 
@@ -56,6 +64,11 @@ export default function Signup() {
       Password: password,
       Phone: "+91" + phone,
       Gender: "Other",
+      emergencyContacts: {
+        primary: "+91" + primaryContact,
+        secondary: secondaryContact ? "+91" + secondaryContact : "",
+      },
+      profileCompleted: false, // signup ke baad false
     };
 
     try {
@@ -85,14 +98,7 @@ export default function Signup() {
       </Text>
 
       <TextInput
-        style={[
-          styles.input,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-            color: themeColors.text,
-          },
-        ]}
+        style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
         placeholder="First Name"
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={firstName}
@@ -100,14 +106,7 @@ export default function Signup() {
       />
 
       <TextInput
-        style={[
-          styles.input,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-            color: themeColors.text,
-          },
-        ]}
+        style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
         placeholder="Last Name"
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={lastName}
@@ -115,14 +114,7 @@ export default function Signup() {
       />
 
       <TextInput
-        style={[
-          styles.input,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-            color: themeColors.text,
-          },
-        ]}
+        style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
         placeholder="Email"
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         keyboardType="email-address"
@@ -131,19 +123,9 @@ export default function Signup() {
         onChangeText={setEmail}
       />
 
-      {/* PHONE INPUT */}
-      <View
-        style={[
-          styles.phoneContainer,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-          },
-        ]}
-      >
-        <Text style={[styles.prefix, { color: themeColors.text }]}>
-          +91
-        </Text>
+      {/* PHONE */}
+      <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
+        <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
         <TextInput
           style={[styles.phoneInput, { color: themeColors.text }]}
           placeholder="Enter 10 digit number"
@@ -151,22 +133,51 @@ export default function Signup() {
           keyboardType="number-pad"
           maxLength={10}
           value={phone}
-          onChangeText={(text) =>
-            setPhone(text.replace(/[^0-9]/g, ""))
-          }
+          onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ""))}
         />
       </View>
 
+     {/* PRIMARY EMERGENCY CONTACT */}
+<View
+  style={[
+    styles.phoneContainer,
+    { borderColor: themeColors.border, backgroundColor: themeColors.card },
+  ]}
+>
+  <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
+  <TextInput
+    style={[styles.phoneInput, { color: themeColors.text }]}
+    placeholder="Primary Emergency Contact"
+    
+    placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+    keyboardType="number-pad"
+    maxLength={10}
+    value={primaryContact}
+    onChangeText={(text) => setPrimaryContact(text.replace(/[^0-9]/g, ""))}
+  />
+</View>
+
+{/* SECONDARY EMERGENCY CONTACT */}
+<View
+  style={[
+    styles.phoneContainer,
+    { borderColor: themeColors.border, backgroundColor: themeColors.card },
+  ]}
+>
+  <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
+  <TextInput
+    style={[styles.phoneInput, { color: themeColors.text }]}
+    placeholder="Secondary Emergency Contact"
+    placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+    keyboardType="number-pad"
+    maxLength={10}
+    value={secondaryContact}
+    onChangeText={(text) => setSecondaryContact(text.replace(/[^0-9]/g, ""))}
+  />
+</View>
+
       {/* PASSWORD */}
-      <View
-        style={[
-          styles.passwordContainer,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-          },
-        ]}
-      >
+      <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
         <TextInput
           style={[styles.passwordInput, { color: themeColors.text }]}
           placeholder="Password"
@@ -176,24 +187,12 @@ export default function Signup() {
           onChangeText={setPassword}
         />
         <TouchableOpacity onPress={() => setSecure1(!secure1)}>
-          <Ionicons
-            name={secure1 ? "eye-off-outline" : "eye-outline"}
-            size={22}
-            color={themeColors.text}
-          />
+          <Ionicons name={secure1 ? "eye-off-outline" : "eye-outline"} size={22} color={themeColors.text} />
         </TouchableOpacity>
       </View>
 
       {/* CONFIRM PASSWORD */}
-      <View
-        style={[
-          styles.passwordContainer,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-          },
-        ]}
-      >
+      <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
         <TextInput
           style={[styles.passwordInput, { color: themeColors.text }]}
           placeholder="Confirm Password"
@@ -203,35 +202,12 @@ export default function Signup() {
           onChangeText={setConfirmPassword}
         />
         <TouchableOpacity onPress={() => setSecure2(!secure2)}>
-          <Ionicons
-            name={secure2 ? "eye-off-outline" : "eye-outline"}
-            size={22}
-            color={themeColors.text}
-          />
+          <Ionicons name={secure2 ? "eye-off-outline" : "eye-outline"} size={22} color={themeColors.text} />
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        style={[
-          styles.signupButton,
-          {
-            backgroundColor:
-              theme === "dark" ? "#ffffff" : "#000000",
-          },
-          loading && { opacity: 0.7 },
-        ]}
-        onPress={handleSignup}
-        disabled={loading}
-      >
-        <Text
-          style={[
-            styles.signupText,
-            {
-              color:
-                theme === "dark" ? "#000000" : "#ffffff",
-            },
-          ]}
-        >
+      <TouchableOpacity style={[styles.signupButton, { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" }, loading && { opacity: 0.7 }]} onPress={handleSignup} disabled={loading}>
+        <Text style={[styles.signupText, { color: theme === "dark" ? "#000000" : "#ffffff" }]}>
           {loading ? "Creating..." : "Sign Up"}
         </Text>
       </TouchableOpacity>
@@ -240,59 +216,14 @@ export default function Signup() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    padding: 24,
-    justifyContent: "center",
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    marginBottom: 30,
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
-  phoneContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-  },
-  prefix: {
-    marginRight: 8,
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  phoneInput: {
-    flex: 1,
-    paddingVertical: 14,
-  },
-  passwordContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    marginBottom: 16,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingVertical: 14,
-  },
-  signupButton: {
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  signupText: {
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  container: { flexGrow: 1, padding: 24, justifyContent: "center" },
+  title: { fontSize: 28, fontWeight: "700", marginBottom: 30, textAlign: "center" },
+  input: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 16 },
+  phoneContainer: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, marginBottom: 16 },
+  prefix: { marginRight: 8, fontSize: 16, fontWeight: "500" },
+  phoneInput: { flex: 1, paddingVertical: 14 },
+  passwordContainer: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, marginBottom: 16 },
+  passwordInput: { flex: 1, paddingVertical: 14 },
+  signupButton: { padding: 15, borderRadius: 12, alignItems: "center" },
+  signupText: { fontWeight: "600", fontSize: 16 },
 });
