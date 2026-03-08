@@ -13,9 +13,18 @@ import {
   View,
 } from "react-native";
 
+import { useTheme } from "../../../context/themecontext";
+import { colors } from "../../../config/colors";
+
 export default function ChatInfo() {
   const { chatId, isPrivate } = useLocalSearchParams();
   const router = useRouter();
+
+  const { theme } = useTheme();
+  const themeColors = colors[theme];
+
+  const leaveTextColor = theme === "dark" ? "#fbbf24" : "#d97706";
+  const deleteTextColor = theme === "dark" ? "#f87171" : "#dc2626";
 
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [chatData, setChatData] = useState<any>(null);
@@ -74,7 +83,6 @@ export default function ChatInfo() {
     }
   };
 
-  /* LEAVE GROUP */
   const handleLeaveGroup = () => {
     Alert.alert(
       "Leave Group",
@@ -103,7 +111,6 @@ export default function ChatInfo() {
     );
   };
 
-  /* DELETE GROUP (ADMIN) */
   const handleDeleteGroup = () => {
     Alert.alert(
       "Delete Group",
@@ -132,7 +139,6 @@ export default function ChatInfo() {
     );
   };
 
-  /* DELETE PRIVATE CHAT */
   const handleDeletePrivateChat = () => {
     Alert.alert(
       "Delete Chat",
@@ -161,33 +167,48 @@ export default function ChatInfo() {
     );
   };
 
-  if (loading)
-    return <ActivityIndicator size="large" style={{ flex: 1 }} />;
+  if (loading) {
+    return (
+      <View
+        style={[
+          styles.loaderContainer,
+          { backgroundColor: themeColors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={themeColors.text} />
+      </View>
+    );
+  }
 
   if (!chatData && !privateChat) return null;
 
   const isAdmin = chatData?.CreatedBy === currentUser?.UserId;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: themeColors.background },
+      ]}
+    >
+      <Text style={[styles.title, { color: themeColors.text }]}>
         {privateChat ? "Private Chat" : chatData.GroupName}
       </Text>
 
-      {/* PRIVATE CHAT OPTIONS */}
       {privateChat && (
         <Pressable
-          style={styles.deleteBtn}
+          style={[styles.actionBtn, { borderColor: themeColors.border }]}
           onPress={handleDeletePrivateChat}
         >
-          <Text style={styles.btnText}>Delete Chat</Text>
+          <Text style={[styles.actionText, { color: deleteTextColor }]}>
+            Delete Chat
+          </Text>
         </Pressable>
       )}
 
-      {/* GROUP INFO */}
       {!privateChat && (
         <>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: themeColors.text }]}>
             Members ({chatData.TotalMembers})
           </Text>
 
@@ -199,17 +220,22 @@ export default function ChatInfo() {
 
               return (
                 <Pressable
-                  onPress={() =>
-                    router.push(`/profile/${item.UserId}`)
-                  }
-                  style={styles.memberRow}
+                  onPress={() => router.push(`/profile/${item.UserId}`)}
+                  style={[
+                    styles.memberRow,
+                    { borderBottomColor: themeColors.border },
+                  ]}
                 >
                   <Text
                     style={[
                       styles.memberHandle,
-                      item.UserId === currentUser?.UserId
-                        ? { fontWeight: "bold" }
-                        : {},
+                      {
+                        color: themeColors.text,
+                        fontWeight:
+                          item.UserId === currentUser?.UserId
+                            ? "bold"
+                            : "normal",
+                      },
                     ]}
                   >
                     {item.Handle}
@@ -218,7 +244,11 @@ export default function ChatInfo() {
                   <View
                     style={[
                       styles.statusDot,
-                      { backgroundColor: online ? "#4caf50" : "#bbb" },
+                      {
+                        backgroundColor: online
+                          ? "#22c55e"
+                          : themeColors.border,
+                      },
                     ]}
                   />
                 </Pressable>
@@ -226,16 +256,23 @@ export default function ChatInfo() {
             }}
           />
 
-          <Pressable style={styles.leaveBtn} onPress={handleLeaveGroup}>
-            <Text style={styles.btnText}>Leave Group</Text>
+          <Pressable
+            style={[styles.actionBtn, { borderColor: themeColors.border }]}
+            onPress={handleLeaveGroup}
+          >
+            <Text style={[styles.actionText, { color: leaveTextColor }]}>
+              Leave Group
+            </Text>
           </Pressable>
 
           {isAdmin && (
             <Pressable
-              style={styles.deleteBtn}
+              style={[styles.actionBtn, { borderColor: themeColors.border }]}
               onPress={handleDeleteGroup}
             >
-              <Text style={styles.btnText}>Delete Group</Text>
+              <Text style={[styles.actionText, { color: deleteTextColor }]}>
+                Delete Group
+              </Text>
             </Pressable>
           )}
         </>
@@ -248,6 +285,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+  },
+
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   title: {
@@ -267,7 +310,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
     alignItems: "center",
   },
 
@@ -281,24 +323,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
 
-  leaveBtn: {
-    marginTop: 30,
+  actionBtn: {
+    marginTop: 20,
     padding: 14,
-    backgroundColor: "#ff9800",
-    borderRadius: 8,
+    borderRadius: 10,
+    borderWidth: 1,
     alignItems: "center",
   },
 
-  deleteBtn: {
-    marginTop: 15,
-    padding: 14,
-    backgroundColor: "#e53935",
-    borderRadius: 8,
-    alignItems: "center",
-  },
-
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
+  actionText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

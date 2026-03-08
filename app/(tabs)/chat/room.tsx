@@ -14,8 +14,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
+
 import { colors } from "../../../config/colors";
 import { useTheme } from "../../../context/themecontext";
 
@@ -39,7 +40,7 @@ export default function Room() {
   const CHAT_ID = chatId;
 
   const { theme } = useTheme();
-  const themeColors = theme === "dark" ? colors.dark : colors.light;
+  const themeColors = colors[theme];
 
   const [USER_ID, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -150,7 +151,12 @@ export default function Room() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       {/* HEADER */}
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          { borderColor: themeColors.border },
+        ]}
+      >
         {isPrivate === "true" ? (
           <Pressable
             onPress={() => {
@@ -159,13 +165,41 @@ export default function Room() {
               }
             }}
           >
-            <Text style={styles.headerTitle}>{otherUserHandle}</Text>
-            <Text style={styles.headerSubtitle}>Tap to view profile</Text>
+            <Text
+              style={[
+                styles.headerTitle,
+                { color: themeColors.text },
+              ]}
+            >
+              {otherUserHandle}
+            </Text>
+            <Text
+              style={[
+                styles.headerSubtitle,
+                { color: themeColors.secondaryText },
+              ]}
+            >
+              Tap to view profile
+            </Text>
           </Pressable>
         ) : (
           <TouchableOpacity onPress={openGroupInfo}>
-            <Text style={styles.headerTitle}>{title}</Text>
-            <Text style={styles.headerSubtitle}>Tap to view group info</Text>
+            <Text
+              style={[
+                styles.headerTitle,
+                { color: themeColors.text },
+              ]}
+            >
+              {title}
+            </Text>
+            <Text
+              style={[
+                styles.headerSubtitle,
+                { color: themeColors.secondaryText },
+              ]}
+            >
+              Tap to view group info
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -179,8 +213,21 @@ export default function Room() {
         {messages.map((msg, index) => {
           if (msg.IsSystem) {
             return (
-              <View key={index} style={styles.systemMessage}>
-                <Text style={styles.systemText}>{msg.Text}</Text>
+              <View
+                key={index}
+                style={[
+                  styles.systemMessage,
+                  { backgroundColor: themeColors.card },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.systemText,
+                    { color: themeColors.secondaryText },
+                  ]}
+                >
+                  {msg.Text}
+                </Text>
               </View>
             );
           }
@@ -211,6 +258,7 @@ export default function Room() {
                   {msg.SenderName || otherUserHandle || "User"}
                 </Text>
               )}
+
               <Text style={{ color: themeColors.text }}>
                 {msg.Text}
               </Text>
@@ -220,7 +268,12 @@ export default function Room() {
       </ScrollView>
 
       {/* INPUT */}
-      <View style={styles.inputRow}>
+      <View
+        style={[
+          styles.inputRow,
+          { borderColor: themeColors.border },
+        ]}
+      >
         <TextInput
           style={[
             styles.input,
@@ -235,6 +288,7 @@ export default function Room() {
           value={inputText}
           onChangeText={setInputText}
         />
+
         <TouchableOpacity
           style={[
             styles.sendBtn,
@@ -259,11 +313,28 @@ export default function Room() {
 /* STYLES */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFF" },
-  header: { padding: 15, borderBottomWidth: 1, borderColor: "#eee" },
-  headerTitle: { fontSize: 18, fontWeight: "bold" },
-  headerSubtitle: { fontSize: 12, color: "#777", marginTop: 2 },
-  messages: { flex: 1, paddingHorizontal: 15 },
+  container: { flex: 1 },
+
+  header: {
+    padding: 15,
+    borderBottomWidth: 1,
+  },
+
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+
+  headerSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+
+  messages: {
+    flex: 1,
+    paddingHorizontal: 15,
+  },
+
   messageReceived: {
     alignSelf: "flex-start",
     padding: 10,
@@ -271,6 +342,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
+
   messageSent: {
     alignSelf: "flex-end",
     padding: 10,
@@ -278,21 +350,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
-  senderName: { fontSize: 10, fontWeight: "bold", marginBottom: 4 },
+
+  senderName: {
+    fontSize: 10,
+    fontWeight: "bold",
+    marginBottom: 4,
+  },
+
   systemMessage: {
     alignSelf: "center",
-    backgroundColor: "#EEE",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 15,
     marginBottom: 10,
   },
-  systemText: { fontSize: 12, color: "#666" },
+
+  systemText: {
+    fontSize: 12,
+  },
+
   inputRow: {
     flexDirection: "row",
     padding: 10,
     borderTopWidth: 1,
   },
+
   input: {
     flex: 1,
     borderWidth: 1,
@@ -300,11 +382,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 8,
   },
+
   sendBtn: {
     marginLeft: 10,
     paddingHorizontal: 20,
     borderRadius: 20,
     justifyContent: "center",
   },
-  sendText: { color: "#FFF", fontWeight: "bold" },
+
+  sendText: {
+    fontWeight: "bold",
+  },
 });

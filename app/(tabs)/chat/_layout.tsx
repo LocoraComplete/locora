@@ -1,12 +1,13 @@
 import { getSocket } from "@/config/socket";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
+
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
 
 export default function ChatLayout() {
   const { theme } = useTheme();
-  const themeColors = theme === "dark" ? colors.dark : colors.light;
+  const themeColors = colors[theme];
 
   useEffect(() => {
     const socket = getSocket();
@@ -37,11 +38,16 @@ export default function ChatLayout() {
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Chats" }}
+        options={{
+          title: "Chats",
+        }}
       />
+
       <Stack.Screen
         name="room"
-        options={{ title: "Chat Room" }}
+        options={{
+          title: "Chat Room",
+        }}
       />
     </Stack>
   );

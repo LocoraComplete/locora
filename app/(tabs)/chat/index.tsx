@@ -2,8 +2,8 @@ import { API_BASE_URL } from "@/config/api";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { useFocusEffect, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { Stack, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,9 +17,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../../../context/themecontext";
+import { colors } from "../../../config/colors";
 
 export default function ChatList() {
   const router = useRouter();
+  const { theme } = useTheme();
+  const themeColors = colors[theme];
+
+  const accent = "#3b82f6";
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [myGroups, setMyGroups] = useState<any[]>([]);
@@ -27,34 +33,27 @@ export default function ChatList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [searchUsers, setSearchUsers] = useState<any[]>([]);
-  const [searchGroups, setSearchGroups] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-
   const [modalVisible, setModalVisible] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [description, setDescription] = useState("");
 
-  /* LOAD USER */
   useEffect(() => {
     const loadUser = async () => {
       const storedUser = await AsyncStorage.getItem("user");
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        setCurrentUserId(parsedUser?.UserId || parsedUser?.id);
+        setCurrentUserId(parsedUser.UserId);
       }
     };
     loadUser();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (currentUserId) {
-        loadMyGroups();
-        loadRecommended();
-      }
-    }, [currentUserId])
-  );
+  useEffect(() => {
+    if (currentUserId) {
+      loadMyGroups();
+      loadRecommended();
+    }
+  }, [currentUserId]);
 
   const loadMyGroups = async () => {
     try {
@@ -62,7 +61,9 @@ export default function ChatList() {
       const res = await axios.get(
         `${API_BASE_URL}/api/chat/user/${currentUserId}`
       );
-      setMyGroups(res.data || []);
+      setMyGroups(res.data);
+    } catch (err) {
+      console.log(err);
     } finally {
       setLoading(false);
     }
@@ -73,94 +74,9 @@ export default function ChatList() {
       const res = await axios.get(
         `${API_BASE_URL}/api/chat/recommend/${currentUserId}`
       );
-      setRecommended(res.data || []);
+      setRecommended(res.data);
     } catch (err) {
-      console.log("Recommend error:", err);
-    }
-  };
-
-/* DELETE PRIVATE CHAT */
-  const deletePrivateChat = (chatId: string) => {
-    Alert.alert(
-      "Delete Chat",
-      "This will permanently delete the conversation.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await axios.delete(
-                `${API_BASE_URL}/api/chat/deletePrivate/${chatId}`,
-                {
-                  data: { userId: currentUserId },
-                }
-              );
-
-              await loadMyGroups();
-            } catch (err) {
-              console.log("Delete chat error:", err);
-              Alert.alert("Failed to delete chat");
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  /* GLOBAL SEARCH */
-  const searchGlobal = async (text: string) => {
-    setSearchQuery(text);
-
-    if (!text.trim()) {
-      setSearchUsers([]);
-      setSearchGroups([]);
-      return;
-    }
-
-    try {
-      setSearching(true);
-
-      const res = await axios.get(`${API_BASE_URL}/api/chat/search`, {
-        params: {
-          query: text,
-          userId: currentUserId,
-        },
-      });
-
-      setSearchUsers(res.data.users || []);
-      setSearchGroups(res.data.groups || []);
-    } catch (err) {
-      console.log("Search error:", err);
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  /* START PRIVATE CHAT  */
-  const startPrivateChat = async (user: any) => {
-    try {
-      const res = await axios.post(`${API_BASE_URL}/api/chat/private`, {
-        User1: currentUserId,
-        User2: user.UserId,
-      });
-
-      const chat = res.data;
-
-      router.push({
-        pathname: "/chat/room",
-        params: {
-          chatId: chat.ChatId,
-          isPrivate: "true",
-          otherUserId: user.UserId,
-          otherUserHandle: user.Handle,
-          title: user.Handle,
-        },
-      });
-    } catch (err) {
-      console.log("Private chat error:", err);
-      Alert.alert("Failed to start chat");
+      console.log(err);
     }
   };
 
@@ -169,7 +85,7 @@ export default function ChatList() {
     if (!currentUserId) return Alert.alert("User not loaded");
 
     const duplicate = myGroups.find(
-      (g) => g.GroupName?.toLowerCase() === groupName.trim().toLowerCase()
+      (g) => g.GroupName.toLowerCase() === groupName.trim().toLowerCase()
     );
     if (duplicate) return Alert.alert("Group already exists");
 
@@ -193,15 +109,13 @@ export default function ChatList() {
 
   const joinGroup = async (chatId: string) => {
     if (!currentUserId) return;
-
     try {
       await axios.post(`${API_BASE_URL}/api/chat/join`, {
         ChatId: chatId,
         UserId: currentUserId,
       });
-
-      await loadMyGroups();
-      await loadRecommended();
+      loadMyGroups();
+      loadRecommended();
       Alert.alert("Joined successfully");
     } catch {
       Alert.alert("Failed to join");
@@ -209,335 +123,393 @@ export default function ChatList() {
   };
 
   const openChat = (chat: any) => {
-    const isPrivate = chat.ChatType === "private";
-
-    const otherUser =
-      isPrivate &&
-      chat.Users?.find((u: any) => u.UserId !== currentUserId);
-
     router.push({
       pathname: "/chat/room",
-      params: {
-        chatId: chat.ChatId,
-        isPrivate: isPrivate ? "true" : "false",
-        otherUserId: otherUser?.UserId || "",
-        otherUserHandle: otherUser?.Handle || "",
-        title: isPrivate ? otherUser?.Handle : chat.GroupName,
-      },
+      params: { chatId: chat.ChatId, title: chat.GroupName },
     });
   };
 
-  const filteredGroups = myGroups
-    .filter((chat) => {
-      if (chat.ChatType === "private") {
-        const otherUser = chat.Users?.find(
-          (u: any) => u.UserId !== currentUserId
-        );
-        return otherUser?.Handle
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase());
-      }
-
-      return chat.GroupName?.toLowerCase().includes(
-        searchQuery.toLowerCase()
-      );
-    })
-    .sort((a, b) => {
-      return (
-        new Date(b.LastMessageTime || 0).getTime() -
-        new Date(a.LastMessageTime || 0).getTime()
-      );
-    });
+  /* SEARCH FILTER */
+  const filteredGroups = myGroups.filter((chat) =>
+    chat.GroupName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>MESSAGES</Text>
-        <Pressable style={styles.plusBtn} onPress={() => setModalVisible(true)}>
-          <Ionicons name="add-outline" size={20} color="#fff" />
-        </Pressable>
-      </View>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={styles.searchContainer}>
-        <Ionicons name="search-outline" size={16} color="#888" />
-        <TextInput
-          placeholder="Search users or groups..."
-          style={styles.searchInput}
-          value={searchQuery}
-          onChangeText={searchGlobal}
-        />
-      </View>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+      >
+        {/* HEADER */}
+        <View style={[styles.header, { borderColor: themeColors.border }]}>
+          <Text style={[styles.title, { color: themeColors.text }]}>
+            MESSAGES
+          </Text>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* SEARCH RESULTS */}
-        {searchQuery.length > 0 && (
-          <View style={{ paddingHorizontal: 16 }}>
-            {searching && <ActivityIndicator />}
+          <Pressable
+            style={[styles.plusBtn, { backgroundColor: accent }]}
+            onPress={() => setModalVisible(true)}
+          >
+            <Ionicons name="add-outline" size={20} color="#fff" />
+          </Pressable>
+        </View>
 
-            {searchUsers.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>Users</Text>
+        {/* SEARCH */}
+        <View
+          style={[
+            styles.searchContainer,
+            {
+              backgroundColor: themeColors.card,
+              borderColor: themeColors.border,
+            },
+          ]}
+        >
+          <Ionicons
+            name="search-outline"
+            size={16}
+            color={themeColors.secondaryText}
+          />
+          <TextInput
+            placeholder="Search chats or groups..."
+            placeholderTextColor={themeColors.secondaryText}
+            style={[styles.searchInput, { color: themeColors.text }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
-                {searchUsers.map((user) => (
-                  <Pressable
-                    key={user.UserId}
-                    style={styles.chatCard}
-                    onPress={() => startPrivateChat(user)}
-                  >
-                    <Image
-                      source={{
-                        uri: `https://api.dicebear.com/7.x/initials/png?seed=${user.Handle}`,
-                      }}
-                      style={styles.avatar}
-                    />
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {/* RECOMMENDED */}
+          {searchQuery.length === 0 && (
+            <View style={styles.recommendationSection}>
+              <View style={styles.sectionHeader}>
+                <Text
+                  style={[
+                    styles.sectionLabel,
+                    { color: themeColors.secondaryText },
+                  ]}
+                >
+                  Join Travel Groups
+                </Text>
+              </View>
 
-                    <Text style={styles.chatName}>{user.Handle}</Text>
-                  </Pressable>
-                ))}
-              </>
-            )}
-
-            {searchGroups.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>Groups</Text>
-
-                {searchGroups.map((group) => (
-                  <Pressable
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {recommended.map((group) => (
+                  <View
                     key={group.ChatId}
-                    style={styles.chatCard}
-                    onPress={async () => {
-                      if (!group.Members.includes(currentUserId)) {
-                        await joinGroup(group.ChatId);
-                      }
-
-                      openChat(group);
-                    }}
+                    style={[
+                      styles.groupCard,
+                      { backgroundColor: themeColors.card },
+                    ]}
                   >
                     <Image
                       source={{
                         uri: `https://api.dicebear.com/7.x/initials/png?seed=${group.GroupName}`,
                       }}
-                      style={styles.avatar}
+                      style={styles.groupImage}
                     />
 
-                    <Text style={styles.chatName}>{group.GroupName}</Text>
-                  </Pressable>
-                ))}
-              </>
-            )}
-          </View>
-        )}
+                    <Text
+                      style={[styles.groupName, { color: themeColors.text }]}
+                    >
+                      {group.GroupName}
+                    </Text>
 
-        {/* NORMAL VIEW */}
-        {searchQuery.length === 0 && (
-          <>
-            {recommended.length > 0 && (
-              <View style={styles.recommendationSection}>
-                <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionLabel}>Join Travel Groups</Text>
-                </View>
+                    <Text
+                      style={[
+                        styles.groupMembers,
+                        { color: themeColors.secondaryText },
+                      ]}
+                    >
+                      {group.Members?.length || 0} travelers
+                    </Text>
 
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {recommended.map((group) => (
-                    <View key={group.ChatId} style={styles.groupCard}>
-                      <Image
-                        source={{
-                          uri: `https://api.dicebear.com/7.x/initials/png?seed=${group.GroupName}`,
-                        }}
-                        style={styles.groupImage}
+                    <Pressable
+                      style={[styles.joinBtn, { backgroundColor: accent }]}
+                      onPress={() => joinGroup(group.ChatId)}
+                    >
+                      <Ionicons
+                        name="person-add-outline"
+                        size={12}
+                        color="#fff"
                       />
+                      <Text style={styles.joinBtnText}>JOIN NOW</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
-                      <Text style={styles.groupName}>{group.GroupName}</Text>
+          {/* MY GROUPS */}
+          <View style={styles.chatList}>
+            {loading && <ActivityIndicator size="large" color={accent} />}
 
-                      <Text style={styles.groupMembers}>
-                        {group.Members?.length || 0} travelers
-                      </Text>
-
-                      <Pressable
-                        style={styles.joinBtn}
-                        onPress={() => joinGroup(group.ChatId)}
-                      >
-                        <Ionicons
-                          name="person-add-outline"
-                          size={12}
-                          color="#fff"
-                        />
-                        <Text style={styles.joinBtnText}>JOIN NOW</Text>
-                      </Pressable>
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
+            {!loading && filteredGroups.length === 0 && (
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: themeColors.secondaryText,
+                  marginTop: 30,
+                }}
+              >
+                No results found
+              </Text>
             )}
 
-            <View style={styles.chatList}>
-              {loading && <ActivityIndicator size="large" />}
-
-              {filteredGroups.map((chat) => (
-                <Pressable
-                  key={chat.ChatId}
-                  style={styles.chatCard}
-                  onPress={() => openChat(chat)}
-                  onLongPress={() => {
-                    if (chat.ChatType === "private") {
-                      deletePrivateChat(chat.ChatId);
-                    }
+            {filteredGroups.map((chat) => (
+              <Pressable
+                key={chat.ChatId}
+                style={[styles.chatCard, { borderColor: themeColors.border }]}
+                onPress={() => openChat(chat)}
+              >
+                <Image
+                  source={{
+                    uri: `https://api.dicebear.com/7.x/initials/png?seed=${chat.GroupName}`,
                   }}
-                  delayLongPress={400}
-                >
-                  <Image
-                    source={{
-                      uri: `https://api.dicebear.com/7.x/initials/png?seed=${
-                        chat.ChatType === "private"
-                          ? chat.Users?.find(
-                              (u: any) => u.UserId !== currentUserId
-                            )?.Handle
-                          : chat.GroupName
-                      }`,
-                    }}
-                    style={styles.avatar}
-                  />
+                  style={styles.avatar}
+                />
 
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.chatTopRow}>
-                      <Text style={styles.chatName}>
-                        {chat.ChatType === "private"
-                          ? chat.Users?.find(
-                              (u: any) => u.UserId !== currentUserId
-                            )?.Handle
-                          : chat.GroupName}
-                      </Text>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.chatTopRow}>
+                    <Text
+                      style={[styles.chatName, { color: themeColors.text }]}
+                    >
+                      {chat.GroupName}
+                    </Text>
 
-                      <Text style={styles.chatTime}>
-                        {chat.LastMessageTime
-                          ? new Date(
-                              chat.LastMessageTime
-                            ).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : ""}
-                      </Text>
-                    </View>
-
-                    <Text style={styles.chatMsg} numberOfLines={1}>
-                      {chat.LastMessage || "No messages yet"}
+                    <Text
+                      style={[
+                        styles.chatTime,
+                        { color: themeColors.secondaryText },
+                      ]}
+                    >
+                      Now
                     </Text>
                   </View>
-                </Pressable>
-              ))}
-            </View>
-          </>
-        )}
-      </ScrollView>
 
-      <Modal visible={modalVisible} animationType="slide">
-        <SafeAreaView style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Create Group</Text>
+                  <Text
+                    style={[
+                      styles.chatMsg,
+                      { color: themeColors.secondaryText },
+                    ]}
+                  >
+                    Tap to open chat
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
 
-          <TextInput
-            placeholder="Group Name"
-            style={styles.input}
-            value={groupName}
-            onChangeText={setGroupName}
-          />
+        {/* MODAL */}
+        <Modal visible={modalVisible} animationType="slide">
+          <SafeAreaView
+            style={[
+              styles.modalContainer,
+              { backgroundColor: themeColors.background },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Create Group
+            </Text>
 
-          <TextInput
-            placeholder="Description"
-            style={styles.input}
-            value={description}
-            onChangeText={setDescription}
-          />
+            <TextInput
+              placeholder="Group Name"
+              placeholderTextColor={themeColors.secondaryText}
+              style={[
+                styles.input,
+                {
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                  backgroundColor: themeColors.card,
+                },
+              ]}
+              value={groupName}
+              onChangeText={setGroupName}
+            />
 
-          <Pressable style={styles.createBtn} onPress={createGroup}>
-            <Text style={{ color: "#fff", fontWeight: "bold" }}>Create</Text>
-          </Pressable>
+            <TextInput
+              placeholder="Description"
+              placeholderTextColor={themeColors.secondaryText}
+              style={[
+                styles.input,
+                {
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                  backgroundColor: themeColors.card,
+                },
+              ]}
+              value={description}
+              onChangeText={setDescription}
+            />
 
-          <Pressable onPress={() => setModalVisible(false)}>
-            <Text style={{ textAlign: "center", marginTop: 20 }}>Cancel</Text>
-          </Pressable>
-        </SafeAreaView>
-      </Modal>
-    </SafeAreaView>
+            <Pressable
+              style={[styles.createBtn, { backgroundColor: accent }]}
+              onPress={createGroup}
+            >
+              <Text style={{ color: "#fff", fontWeight: "bold" }}>Create</Text>
+            </Pressable>
+
+            <Pressable onPress={() => setModalVisible(false)}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginTop: 20,
+                  color: accent,
+                  fontWeight: "600",
+                }}
+              >
+                Cancel
+              </Text>
+            </Pressable>
+          </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
+
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     padding: 16,
     borderBottomWidth: 1,
-    borderColor: "#eee",
   },
-  title: { fontSize: 20, fontWeight: "900", fontStyle: "italic" },
-  plusBtn: { backgroundColor: "#fbbf24", padding: 10, borderRadius: 14 },
+
+  title: {
+    fontSize: 20,
+    fontWeight: "900",
+    fontStyle: "italic",
+  },
+
+  plusBtn: {
+    padding: 10,
+    borderRadius: 14,
+  },
+
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f2f2f2",
     margin: 16,
     paddingHorizontal: 12,
     borderRadius: 25,
     height: 40,
     gap: 8,
+    borderWidth: 1,
   },
+
   searchInput: { flex: 1 },
+
   recommendationSection: { marginBottom: 10 },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    marginBottom: 8,
+
+  sectionHeader: { paddingHorizontal: 16, marginBottom: 8 },
+
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: "900",
   },
-  sectionLabel: { fontSize: 11, fontWeight: "900", color: "#888", marginTop: 10 },
+
   groupCard: {
     width: 170,
-    backgroundColor: "#fef3c7",
     borderRadius: 20,
     marginLeft: 16,
     padding: 12,
     alignItems: "center",
   },
-  groupImage: { width: 50, height: 50, borderRadius: 12, marginBottom: 6 },
-  groupName: { fontSize: 12, fontWeight: "700", textAlign: "center" },
-  groupMembers: { fontSize: 10, color: "#555", marginBottom: 6 },
+
+  groupImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 12,
+    marginBottom: 6,
+  },
+
+  groupName: {
+    fontSize: 12,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  groupMembers: {
+    fontSize: 10,
+    marginBottom: 6,
+  },
+
   joinBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fbbf24",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     gap: 4,
   },
-  joinBtnText: { fontSize: 10, color: "#fff", fontWeight: "700" },
-  chatList: { paddingHorizontal: 16, paddingBottom: 30 },
+
+  joinBtnText: {
+    fontSize: 10,
+    color: "#fff",
+    fontWeight: "700",
+  },
+
+  chatList: {
+    paddingHorizontal: 16,
+    paddingBottom: 30,
+  },
+
   chatCard: {
     flexDirection: "row",
     gap: 12,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderColor: "#eee",
-    alignItems: "center",
   },
-  avatar: { width: 50, height: 50, borderRadius: 14 },
-  chatTopRow: { flexDirection: "row", justifyContent: "space-between" },
-  chatName: { fontSize: 14, fontWeight: "700" },
-  chatTime: { fontSize: 10, color: "#888" },
-  chatMsg: { fontSize: 12, color: "#555" },
-  modalContainer: { flex: 1, padding: 20 },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 20 },
+
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+  },
+
+  chatTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
+  chatName: {
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  chatTime: {
+    fontSize: 10,
+  },
+
+  chatMsg: {
+    fontSize: 12,
+  },
+
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
   },
+
   createBtn: {
-    backgroundColor: "#fbbf24",
     padding: 12,
     borderRadius: 10,
     alignItems: "center",
