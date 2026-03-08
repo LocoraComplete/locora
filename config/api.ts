@@ -1,7 +1,7 @@
 
 import axios from "axios";
 
-export const API_BASE_URL = "http://192.168.174.111:5000";
+export const API_BASE_URL = "https://locora-backend.onrender.com";
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
