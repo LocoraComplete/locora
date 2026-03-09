@@ -15,6 +15,7 @@ import {
 
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import { useLanguage } from "../../../context/languagecontext";
 
 export default function ChatInfo() {
   const { chatId, isPrivate } = useLocalSearchParams();
@@ -22,6 +23,8 @@ export default function ChatInfo() {
 
   const { theme } = useTheme();
   const themeColors = colors[theme];
+
+  const { t } = useLanguage();
 
   const leaveTextColor = theme === "dark" ? "#fbbf24" : "#d97706";
   const deleteTextColor = theme === "dark" ? "#f87171" : "#dc2626";
@@ -85,12 +88,12 @@ export default function ChatInfo() {
 
   const handleLeaveGroup = () => {
     Alert.alert(
-      "Leave Group",
-      "Are you sure you want to leave this group?",
+      t("leaveGroup") || "Leave Group",
+      t("leaveGroupConfirm") || "Are you sure you want to leave this group?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel") || "Cancel", style: "cancel" },
         {
-          text: "Leave",
+          text: t("leave") || "Leave",
           style: "destructive",
           onPress: async () => {
             try {
@@ -103,7 +106,7 @@ export default function ChatInfo() {
 
               router.replace("/(tabs)/chat");
             } catch {
-              Alert.alert("Failed to leave group");
+              Alert.alert(t("leaveFailed") || "Failed to leave group");
             }
           },
         },
@@ -113,12 +116,13 @@ export default function ChatInfo() {
 
   const handleDeleteGroup = () => {
     Alert.alert(
-      "Delete Group",
-      "This will permanently delete the group and all chat history.",
+      t("deleteGroup") || "Delete Group",
+      t("deleteGroupConfirm") ||
+        "This will permanently delete the group and all chat history.",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel") || "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: t("delete") || "Delete",
           style: "destructive",
           onPress: async () => {
             try {
@@ -131,7 +135,7 @@ export default function ChatInfo() {
 
               router.replace("/(tabs)/chat");
             } catch {
-              Alert.alert("Failed to delete group");
+              Alert.alert(t("deleteGroupFailed") || "Failed to delete group");
             }
           },
         },
@@ -141,12 +145,13 @@ export default function ChatInfo() {
 
   const handleDeletePrivateChat = () => {
     Alert.alert(
-      "Delete Chat",
-      "This will remove the conversation and all messages.",
+      t("deleteChat") || "Delete Chat",
+      t("deleteChatConfirm") ||
+        "This will remove the conversation and all messages.",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel") || "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: t("delete") || "Delete",
           style: "destructive",
           onPress: async () => {
             try {
@@ -159,7 +164,7 @@ export default function ChatInfo() {
 
               router.replace("/(tabs)/chat");
             } catch {
-              Alert.alert("Failed to delete chat");
+              Alert.alert(t("deleteChatFailed") || "Failed to delete chat");
             }
           },
         },
@@ -192,7 +197,9 @@ export default function ChatInfo() {
       ]}
     >
       <Text style={[styles.title, { color: themeColors.text }]}>
-        {privateChat ? "Private Chat" : chatData.GroupName}
+        {privateChat
+          ? t("privateChat") || "Private Chat"
+          : chatData.GroupName}
       </Text>
 
       {privateChat && (
@@ -201,7 +208,7 @@ export default function ChatInfo() {
           onPress={handleDeletePrivateChat}
         >
           <Text style={[styles.actionText, { color: deleteTextColor }]}>
-            Delete Chat
+            {t("deleteChat") || "Delete Chat"}
           </Text>
         </Pressable>
       )}
@@ -209,7 +216,7 @@ export default function ChatInfo() {
       {!privateChat && (
         <>
           <Text style={[styles.subtitle, { color: themeColors.text }]}>
-            Members ({chatData.TotalMembers})
+            {t("members") || "Members"} ({chatData.TotalMembers})
           </Text>
 
           <FlatList
@@ -261,7 +268,7 @@ export default function ChatInfo() {
             onPress={handleLeaveGroup}
           >
             <Text style={[styles.actionText, { color: leaveTextColor }]}>
-              Leave Group
+              {t("leaveGroup") || "Leave Group"}
             </Text>
           </Pressable>
 
@@ -271,7 +278,7 @@ export default function ChatInfo() {
               onPress={handleDeleteGroup}
             >
               <Text style={[styles.actionText, { color: deleteTextColor }]}>
-                Delete Group
+                {t("deleteGroup") || "Delete Group"}
               </Text>
             </Pressable>
           )}
@@ -282,10 +289,7 @@ export default function ChatInfo() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
+  container: { flex: 1, padding: 20 },
 
   loaderContainer: {
     flex: 1,
@@ -313,9 +317,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  memberHandle: {
-    fontSize: 16,
-  },
+  memberHandle: { fontSize: 16 },
 
   statusDot: {
     width: 12,

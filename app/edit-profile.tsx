@@ -12,11 +12,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useLanguage } from "../context/languagecontext";
 
 import api from "../config/api";
 import * as ImagePicker from "expo-image-picker";
+
 export default function EditProfile() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
@@ -25,7 +28,6 @@ export default function EditProfile() {
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Load existing user
   useEffect(() => {
     const loadUser = async () => {
       const storedUser = await AsyncStorage.getItem("user");
@@ -44,103 +46,117 @@ export default function EditProfile() {
     loadUser();
   }, []);
 
-  // Pick image from gallery
   const pickImage = async () => {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    const permission =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-  if (!permission.granted) {
-    Alert.alert("Permission required to access gallery");
-    return;
-  }
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-  mediaTypes: ImagePicker.MediaTypeOptions.Images, // ✅ old syntax, works without error
-  allowsEditing: true,
-  quality: 0.8,
-});
-
-  if (!result.canceled) {
-    setProfilePic(result.assets[0].uri);
-  }
-};
-
-  const handleSave = async () => {
-  try {
-    setLoading(true);
-
-    const storedUser = await AsyncStorage.getItem("user");
-    if (!storedUser) {
-      Alert.alert("Error", "User not found. Please login again.");
+    if (!permission.granted) {
+      Alert.alert(t("galleryPermission"));
       return;
     }
 
-    const parsedUser = JSON.parse(storedUser);
-    const userId = parsedUser.UserId;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
 
-    const formData = new FormData();
-    formData.append("name", name);
-    formData.append("username", username);
-    formData.append("pronouns", pronouns);
-    formData.append("bio", bio);
-
-    if (profilePic) {
-      formData.append("profilePic", {
-        uri: profilePic,
-        name: "profile.jpg",
-        type: "image/jpeg",
-      } as any);
+    if (!result.canceled) {
+      setProfilePic(result.assets[0].uri);
     }
+  };
 
-    const response = await api.put(
-      `/api/users/update-profile/${userId}`,
-      formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    );
+  const handleSave = async () => {
+    try {
+      setLoading(true);
 
-    // Update AsyncStorage
-   const updatedUser = {
-  ...parsedUser,
-  ...response.data,
-  profilePic: profilePic ?? parsedUser.profilePic,
-};
+      const storedUser = await AsyncStorage.getItem("user");
+      if (!storedUser) {
+        Alert.alert(t("error"), t("userNotFoundLogin"));
+        return;
+      }
 
-    await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+      const parsedUser = JSON.parse(storedUser);
+      const userId = parsedUser.UserId;
 
-    // Go back to Profile screen
-    router.back();
-  } catch (error: any) {
-    console.log("Update Error:", error?.response?.data || error);
-    Alert.alert("Error", error?.response?.data?.message || "Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("username", username);
+      formData.append("pronouns", pronouns);
+      formData.append("bio", bio);
+
+      if (profilePic) {
+        formData.append(
+          "profilePic",
+          {
+            uri: profilePic,
+            name: "profile.jpg",
+            type: "image/jpeg",
+          } as any
+        );
+      }
+
+      const response = await api.put(
+        `/api/users/update-profile/${userId}`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      const updatedUser = {
+        ...parsedUser,
+        ...response.data,
+        profilePic: profilePic ?? parsedUser.profilePic,
+      };
+
+      await AsyncStorage.setItem(
+        "user",
+        JSON.stringify(updatedUser)
+      );
+
+      router.back();
+    } catch (error: any) {
+      console.log(
+        "Update Error:",
+        error?.response?.data || error
+      );
+      Alert.alert(
+        t("error"),
+        error?.response?.data?.message || t("somethingWrong")
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.header}>Edit Profile</Text>
+        <Text style={styles.header}>{t("editProfile")}</Text>
 
-        {/* Profile Image */}
-        <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
+        <TouchableOpacity
+          style={styles.imageContainer}
+          onPress={pickImage}
+        >
           {profilePic ? (
-  <Image
-    source={{
-    uri: profilePic.startsWith("file")
-  ? profilePic
-  : `${api.defaults.baseURL}${profilePic}?t=${Date.now()}`, // ✅ server image
-    }}
-    style={styles.profileImage}
-  />
-) : (
-  <View style={styles.placeholder}>
-    <Text style={{ color: "#888" }}>Add Photo</Text>
-  </View>
-)}
+            <Image
+              source={{
+                uri: profilePic.startsWith("file")
+                  ? profilePic
+                  : `${api.defaults.baseURL}${profilePic}?t=${Date.now()}`,
+              }}
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={styles.placeholder}>
+              <Text style={{ color: "#888" }}>
+                {t("addPhoto")}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Name</Text>
+          <Text style={styles.label}>{t("name")}</Text>
           <TextInput
             style={styles.input}
             value={name}
@@ -149,7 +165,7 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Username</Text>
+          <Text style={styles.label}>{t("username")}</Text>
           <TextInput
             style={styles.input}
             value={username}
@@ -158,7 +174,7 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Pronouns</Text>
+          <Text style={styles.label}>{t("pronouns")}</Text>
           <TextInput
             style={styles.input}
             value={pronouns}
@@ -167,7 +183,7 @@ export default function EditProfile() {
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Bio</Text>
+          <Text style={styles.label}>{t("bio")}</Text>
           <TextInput
             style={[styles.input, styles.bioInput]}
             value={bio}
@@ -175,7 +191,9 @@ export default function EditProfile() {
             multiline
             maxLength={150}
           />
-          <Text style={styles.charCount}>{bio.length}/150</Text>
+          <Text style={styles.charCount}>
+            {bio.length}/150
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -184,7 +202,7 @@ export default function EditProfile() {
           disabled={loading}
         >
           <Text style={styles.saveText}>
-            {loading ? "Saving..." : "Save"}
+            {loading ? t("saving") : t("save")}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -195,59 +213,62 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     paddingHorizontal: 20,
+    backgroundColor: "#fff",
   },
   header: {
-    fontSize: 22,
-    fontWeight: "600",
-    marginVertical: 20,
+    fontSize: 26,
+    fontWeight: "700",
+    marginTop: 20,
+    marginBottom: 20,
   },
   imageContainer: {
     alignItems: "center",
     marginBottom: 25,
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
   },
   placeholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
     backgroundColor: "#eee",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
   },
   fieldContainer: {
-    marginBottom: 25,
+    marginBottom: 18,
   },
   label: {
-    color: "#555",
     fontSize: 14,
     marginBottom: 6,
+    color: "#555",
   },
   input: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
-    fontSize: 16,
-    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 15,
   },
   bioInput: {
-    height: 80,
+    height: 90,
     textAlignVertical: "top",
   },
   charCount: {
-    color: "#888",
-    fontSize: 12,
     textAlign: "right",
-    marginTop: 5,
+    fontSize: 12,
+    marginTop: 4,
+    color: "#777",
   },
   saveButton: {
-    backgroundColor: "#3897f0",
-    padding: 14,
-    borderRadius: 8,
+    marginTop: 20,
+    backgroundColor: "#111",
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: "center",
     marginBottom: 40,
   },
@@ -256,5 +277,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-}); 
-
+});

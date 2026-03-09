@@ -7,10 +7,12 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import { useLanguage } from "../../context/languagecontext";
 
 export default function PrivacyPolicy() {
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   return (
     <SafeAreaView
@@ -21,13 +23,8 @@ export default function PrivacyPolicy() {
     >
       <ScrollView contentContainerStyle={styles.content}>
 
-        <Text
-          style={[
-            styles.title,
-            { color: themeColors.text },
-          ]}
-        >
-          Privacy Policy
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          {t("privacyPolicy") || "Privacy Policy"}
         </Text>
 
         <Text
@@ -36,166 +33,157 @@ export default function PrivacyPolicy() {
             { color: theme === "dark" ? "#bbb" : "#777" },
           ]}
         >
-          Last Updated: January 2026
+          {t("lastUpdated") || "Last Updated: January 2026"}
         </Text>
 
         {/* 1 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          1. Introduction
+          {t("privacyIntroTitle") || "1. Introduction"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          LOCORA is committed to protecting your privacy.
-          This Privacy Policy explains how we collect, use,
-          disclose, and safeguard your information when
-          you use our platform.
+          {t("privacyIntroText") ||
+            "LOCORA is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform."}
         </Text>
 
         {/* 2 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          2. Information We Collect
+          {t("privacyInfoTitle") || "2. Information We Collect"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          We may collect personal information such as your
-          name, email address, profile information, and usage
-          data. We may also collect technical data including
-          device type, operating system, and app interaction data.
+          {t("privacyInfoText") ||
+            "We may collect personal information such as your name, email address, profile information, and usage data. We may also collect technical data including device type, operating system, and app interaction data."}
         </Text>
 
         {/* 3 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          3. How We Use Your Information
+          {t("privacyUseTitle") || "3. How We Use Your Information"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          Your information is used to provide core features,
-          personalize your experience, improve platform
-          performance, and ensure security. We may also
-          use data to communicate updates or important
-          service-related information.
+          {t("privacyUseText") ||
+            "Your information is used to provide core features, personalize your experience, improve platform performance, and ensure security. We may also use data to communicate updates or important service-related information."}
         </Text>
 
         {/* 4 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          4. Location Data
+          {t("privacyLocationTitle") || "4. Location Data"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          If enabled, LOCORA may access your location to
-          enhance relevant features and improve user
-          interactions. You may disable location access at
-          any time through your device settings.
+          {t("privacyLocationText") ||
+            "If enabled, LOCORA may access your location to enhance relevant features and improve user interactions. You may disable location access at any time through your device settings."}
         </Text>
 
         {/* 5 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          5. Data Sharing
+          {t("privacySharingTitle") || "5. Data Sharing"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          We do not sell personal data to third parties.
-          Information may be shared with trusted service
-          providers solely to support platform functionality,
-          security, and compliance with legal obligations.
+          {t("privacySharingText") ||
+            "We do not sell personal data to third parties. Information may be shared with trusted service providers solely to support platform functionality, security, and compliance with legal obligations."}
         </Text>
 
         {/* 6 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          6. Data Security
+          {t("privacySecurityTitle") || "6. Data Security"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          We implement reasonable technical and organizational
-          measures to protect your data from unauthorized
-          access, alteration, disclosure, or destruction.
+          {t("privacySecurityText") ||
+            "We implement reasonable technical and organizational measures to protect your data from unauthorized access, alteration, disclosure, or destruction."}
         </Text>
 
         {/* 7 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          7. Data Retention
+          {t("privacyRetentionTitle") || "7. Data Retention"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          Personal data is retained only for as long as
-          necessary to fulfill the purposes outlined in
-          this policy, unless a longer retention period
-          is required by law.
+          {t("privacyRetentionText") ||
+            "Personal data is retained only for as long as necessary to fulfill the purposes outlined in this policy, unless a longer retention period is required by law."}
         </Text>
 
         {/* 8 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          8. Your Rights
+          {t("privacyRightsTitle") || "8. Your Rights"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          Depending on your jurisdiction, you may have
-          rights to access, update, or delete your
-          personal information. Requests may be made
-          through the in-app support section.
+          {t("privacyRightsText") ||
+            "Depending on your jurisdiction, you may have rights to access, update, or delete your personal information. Requests may be made through the in-app support section."}
         </Text>
 
         {/* 9 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          9. Changes to This Policy
+          {t("privacyChangesTitle") || "9. Changes to This Policy"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          LOCORA reserves the right to update this
-          Privacy Policy at any time. Continued use
-          of the platform after changes indicates
-          acceptance of the revised policy.
+          {t("privacyChangesText") ||
+            "LOCORA reserves the right to update this Privacy Policy at any time. Continued use of the platform after changes indicates acceptance of the revised policy."}
         </Text>
 
         {/* 10 */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          10. Contact Information
+          {t("privacyContactTitle") || "10. Contact Information"}
         </Text>
+
         <Text
           style={[
             styles.paragraph,
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          For privacy-related inquiries or concerns,
-          please contact us through the support
-          section within the application.
+          {t("privacyContactText") ||
+            "For privacy-related inquiries or concerns, please contact us through the support section within the application."}
         </Text>
 
         <Text
@@ -204,7 +192,7 @@ export default function PrivacyPolicy() {
             { color: theme === "dark" ? "#888" : "#999" },
           ]}
         >
-          © 2026 LOCORA. All rights reserved.
+          {t("copyright") || "© 2026 LOCORA. All rights reserved."}
         </Text>
 
       </ScrollView>

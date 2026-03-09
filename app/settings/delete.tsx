@@ -12,11 +12,14 @@ import {
 import api from "../../config/api";
 import { colors } from "../../config/colors";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 
 export default function DeleteAccount() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
+
   const [loading, setLoading] = useState(false);
 
   // ✅ Get user from AsyncStorage
@@ -38,10 +41,8 @@ export default function DeleteAccount() {
 
     if (!user || !user.UserId) {
       Alert.alert(
-        "Error",
-        `User or UserId not found. Current stored user: ${JSON.stringify(
-          user
-        )}`
+        t("error") || "Error",
+        `${t("userNotFound") || "User or UserId not found"}`
       );
       return;
     }
@@ -49,36 +50,46 @@ export default function DeleteAccount() {
     console.log("Attempting to delete account for UserId:", user.UserId);
 
     Alert.alert(
-      "Delete Account",
-      "Are you sure you want to permanently delete your account?",
+      t("deleteAccount") || "Delete Account",
+      t("confirmDeleteAccount") ||
+        "Are you sure you want to permanently delete your account?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel") || "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: t("delete") || "Delete",
           style: "destructive",
           onPress: async () => {
             setLoading(true);
             try {
-              // 🔹 Axios DELETE request
               const res = await api.delete(`/api/users/delete/${user.UserId}`);
               console.log("DELETE RESPONSE FULL:", res);
 
               if (res.status === 200) {
                 console.log("Account deleted successfully.");
                 await AsyncStorage.removeItem("user");
-                Alert.alert("Success", "Your account has been deleted");
+
+                Alert.alert(
+                  t("success") || "Success",
+                  t("accountDeleted") || "Your account has been deleted"
+                );
+
                 router.replace("/(auth)/login");
               } else {
                 console.log("Delete returned non-200 status:", res.status);
-                Alert.alert("Error", "Failed to delete account");
+
+                Alert.alert(
+                  t("error") || "Error",
+                  t("deleteFailed") || "Failed to delete account"
+                );
               }
             } catch (err: any) {
               console.log("DELETE ERROR FULL:", err);
+
               Alert.alert(
-                "Error",
+                t("error") || "Error",
                 err?.response?.data?.message ||
                   err.message ||
-                  "Failed to delete account"
+                  (t("deleteFailed") || "Failed to delete account")
               );
             } finally {
               setLoading(false);
@@ -107,32 +118,49 @@ export default function DeleteAccount() {
             ]}
             onPress={handleDeleteAccount}
           >
-            <Text style={styles.deleteText}>Delete My Account</Text>
+            <Text style={styles.deleteText}>
+              {t("deleteMyAccount") || "Delete My Account"}
+            </Text>
           </TouchableOpacity>
 
           {/* 🔹 Hardcoded Test Button */}
           <TouchableOpacity
             style={[
               styles.deleteButton,
-              { backgroundColor: theme === "dark" ? "#555" : "#999", marginTop: 20 },
+              {
+                backgroundColor: theme === "dark" ? "#555" : "#999",
+                marginTop: 20,
+              },
             ]}
             onPress={async () => {
               setLoading(true);
               try {
-                const testId = "U003"; // Hardcoded user for test
+                const testId = "U003";
                 console.log("Hardcoded DELETE test for UserId:", testId);
+
                 const res = await api.delete(`/api/users/delete/${testId}`);
+
                 console.log("HARDCODE DELETE RESPONSE:", res.data);
-                Alert.alert("Hardcoded DELETE Response", JSON.stringify(res.data));
+
+                Alert.alert(
+                  t("testResponse") || "Test Response",
+                  JSON.stringify(res.data)
+                );
               } catch (e) {
                 console.log("HARDCODE DELETE ERROR:", e);
-                Alert.alert("Hardcoded DELETE Error", JSON.stringify(e));
+
+                Alert.alert(
+                  t("error") || "Error",
+                  t("deleteFailed") || "Failed to delete account"
+                );
               } finally {
                 setLoading(false);
               }
             }}
           >
-            <Text style={styles.deleteText}>Test Delete Hardcoded</Text>
+            <Text style={styles.deleteText}>
+              {t("testDeleteButton") || "Test Delete Hardcoded"}
+            </Text>
           </TouchableOpacity>
         </>
       )}

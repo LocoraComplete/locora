@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../../config/colors";
 import { useTheme } from "../../../context/themecontext";
+import { useLanguage } from "../../../context/languagecontext";
 
 const postsData = [
   {
@@ -41,6 +42,8 @@ export default function Community() {
 
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
+
+  const { t } = useLanguage();
 
   const toggleLike = (id: string) => {
     setPosts((prev) =>
@@ -121,7 +124,7 @@ export default function Community() {
                     { color: themeColors.text },
                   ]}
                 >
-                  {post.likes} Likes
+                  {post.likes} {t("likes") || "Likes"}
                 </Text>
               </TouchableOpacity>
 
@@ -139,7 +142,7 @@ export default function Community() {
                     { color: themeColors.text },
                   ]}
                 >
-                  💬 {post.comments} Comments
+                  💬 {post.comments} {t("comments") || "Comments"}
                 </Text>
               </TouchableOpacity>
             </View>

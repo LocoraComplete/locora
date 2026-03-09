@@ -15,7 +15,7 @@ export default function LanguageScreen() {
       style={[styles.container, { backgroundColor: themeColors.background }]}
     >
       <Text style={[styles.title, { color: themeColors.text }]}>
-        {t("language")}
+        {t("language") || "Language"}
       </Text>
 
       {/* English */}
@@ -41,7 +41,7 @@ export default function LanguageScreen() {
             },
           ]}
         >
-          English
+          {t("english") || "English"}
         </Text>
       </TouchableOpacity>
 
@@ -68,7 +68,7 @@ export default function LanguageScreen() {
             },
           ]}
         >
-          हिंदी
+          {t("hindi") || "हिंदी"}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>

@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import { useLanguage } from "../../../context/languagecontext";
 
 const dummyComments = [
   { id: 1, user: "rahul_travels", text: "This place looks amazing!" },
@@ -22,6 +23,8 @@ export default function Comments() {
 
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
+
+  const { t } = useLanguage();
 
   return (
     <SafeAreaView
@@ -41,7 +44,7 @@ export default function Comments() {
         </TouchableOpacity>
 
         <Text style={[styles.title, { color: themeColors.text }]}>
-          Comments
+          {t("comments") || "Comments"}
         </Text>
 
         <View style={{ width: 20 }} />
@@ -59,6 +62,7 @@ export default function Comments() {
             <Text style={[styles.user, { color: themeColors.text }]}>
               {c.user}
             </Text>
+
             <Text style={[styles.comment, { color: themeColors.text }]}>
               {c.text}
             </Text>

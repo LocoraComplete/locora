@@ -8,11 +8,14 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 
 export default function Place() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const themeColors = colors[theme];
 
   const place = {
@@ -71,7 +74,7 @@ export default function Place() {
             ]}
           >
             <Text style={{ color: themeColors.text }}>
-              360° View
+              {t("view360") || "360° View"}
             </Text>
           </TouchableOpacity>
 
@@ -85,7 +88,7 @@ export default function Place() {
             ]}
           >
             <Text style={{ color: themeColors.text }}>
-              Route
+              {t("route") || "Route"}
             </Text>
           </TouchableOpacity>
 
@@ -99,7 +102,7 @@ export default function Place() {
             ]}
           >
             <Text style={{ color: themeColors.text }}>
-              Chat
+              {t("chat") || "Chat"}
             </Text>
           </TouchableOpacity>
         </View>

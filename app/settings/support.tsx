@@ -10,16 +10,17 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 
 export default function ContactSupport() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const themeColors = colors[theme];
 
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
 
-  // ✅ Email validation
   const validateEmail = (email: string) => {
     const regex = /^\S+@\S+\.\S+$/;
     return regex.test(email);
@@ -27,26 +28,23 @@ export default function ContactSupport() {
 
   const handleSubmit = async () => {
     if (!email || !message) {
-      Alert.alert("Incomplete", "Please fill in all fields.");
+      Alert.alert(t("incomplete"), t("fillAllFields"));
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert("Invalid Email", "Please enter a valid email address.");
+      Alert.alert(t("invalidEmail"), t("enterValidEmail"));
       return;
     }
 
     if (message.trim().length < 10) {
-      Alert.alert(
-        "Issue Too Short",
-        "Please describe your issue in a little more detail."
-      );
+      Alert.alert(t("issueShort"), t("describeMore"));
       return;
     }
 
     try {
       const response = await fetch(
-        "http://192.168.174.111:5000/api/support/create",
+        "https://locora-backend.onrender.com/api/support/create",
         {
           method: "POST",
           headers: {
@@ -62,18 +60,14 @@ export default function ContactSupport() {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert(
-          "Submitted",
-          "Your message has been received. Our support team will respond within 24–48 hours."
-        );
-
+        Alert.alert(t("submitted"), t("supportResponseTime"));
         setEmail("");
         setMessage("");
       } else {
-        Alert.alert("Error", data.message || "Could not submit request.");
+        Alert.alert(t("error"), data.message || t("submitFailed"));
       }
     } catch (error) {
-      Alert.alert("Error", "Could not connect to support server.");
+      Alert.alert(t("error"), t("serverConnectionError"));
     }
   };
 
@@ -89,19 +83,7 @@ export default function ContactSupport() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.title, { color: themeColors.text }]}>
-          Contact Support
-        </Text>
-
-        {/* Intro */}
-        <Text
-          style={[
-            styles.paragraph,
-            { color: theme === "dark" ? "#ccc" : "#555" },
-          ]}
-        >
-          We’re committed to providing a safe and reliable experience for all users.
-          If you’re facing technical issues, account-related concerns, or have
-          feedback about the platform, our support team is here to help.
+          {t("contactSupport")}
         </Text>
 
         <Text
@@ -110,14 +92,20 @@ export default function ContactSupport() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          Before reaching out, we recommend ensuring that your app is updated
-          to the latest version and that you have a stable internet connection.
-          Many common issues are resolved with a simple restart or update.
+          {t("supportIntro1")}
         </Text>
 
-        {/* Response Policy */}
+        <Text
+          style={[
+            styles.paragraph,
+            { color: theme === "dark" ? "#ccc" : "#555" },
+          ]}
+        >
+          {t("supportIntro2")}
+        </Text>
+
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          Response Time
+          {t("responseTime")}
         </Text>
 
         <Text
@@ -126,14 +114,11 @@ export default function ContactSupport() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          Our team typically responds within 24–48 hours. During peak periods,
-          response times may be slightly longer. We appreciate your patience
-          and understanding.
+          {t("responseTimeDesc")}
         </Text>
 
-        {/* Privacy */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          Privacy & Information
+          {t("privacyInfo")}
         </Text>
 
         <Text
@@ -142,12 +127,9 @@ export default function ContactSupport() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          Please avoid sharing sensitive information such as passwords,
-          OTP codes, or payment details in your message. We will never ask
-          for your password.
+          {t("privacyDesc")}
         </Text>
 
-        {/* Divider */}
         <View
           style={[
             styles.divider,
@@ -155,9 +137,8 @@ export default function ContactSupport() {
           ]}
         />
 
-        {/* Form Section */}
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          Send Us a Message
+          {t("sendMessage")}
         </Text>
 
         <View style={styles.field}>
@@ -167,7 +148,7 @@ export default function ContactSupport() {
               { color: theme === "dark" ? "#bbb" : "#555" },
             ]}
           >
-            Email Address
+            {t("emailAddress")}
           </Text>
 
           <TextInput
@@ -181,7 +162,7 @@ export default function ContactSupport() {
                 color: themeColors.text,
               },
             ]}
-            placeholder="your@email.com"
+            placeholder={t("emailPlaceholder")}
             placeholderTextColor={
               theme === "dark" ? "#888" : "#999"
             }
@@ -197,7 +178,7 @@ export default function ContactSupport() {
               { color: theme === "dark" ? "#bbb" : "#555" },
             ]}
           >
-            Describe Your Issue
+            {t("describeIssue")}
           </Text>
 
           <TextInput
@@ -214,7 +195,7 @@ export default function ContactSupport() {
             ]}
             multiline
             numberOfLines={6}
-            placeholder="Please provide as much detail as possible..."
+            placeholder={t("issuePlaceholder")}
             placeholderTextColor={
               theme === "dark" ? "#888" : "#999"
             }
@@ -242,7 +223,7 @@ export default function ContactSupport() {
               },
             ]}
           >
-            Submit Request
+            {t("submitRequest")}
           </Text>
         </TouchableOpacity>
 
@@ -252,8 +233,7 @@ export default function ContactSupport() {
             { color: theme === "dark" ? "#888" : "#777" },
           ]}
         >
-          By submitting this request, you acknowledge that the information
-          provided is accurate and complete to the best of your knowledge.
+          {t("footerNote")}
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -263,76 +243,61 @@ export default function ContactSupport() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
   },
-
   content: {
-    paddingTop: 30,
-    paddingBottom: 50,
+    padding: 20,
+    paddingBottom: 40,
   },
-
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "700",
-    marginBottom: 20,
-  },
-
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginTop: 25,
-    marginBottom: 10,
-  },
-
-  paragraph: {
-    fontSize: 14,
-    lineHeight: 22,
     marginBottom: 12,
   },
-
-  field: {
-    marginBottom: 20,
+  paragraph: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 10,
   },
-
-  label: {
-    fontSize: 13,
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "600",
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  divider: {
+    height: 1,
+    marginVertical: 20,
+  },
+  field: {
+    marginBottom: 18,
+  },
+  label: {
+    fontSize: 14,
     marginBottom: 6,
   },
-
   input: {
     borderWidth: 1,
     borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 14,
-  },
-
-  textArea: {
-    minHeight: 140,
-    textAlignVertical: "top",
-  },
-
-  submitButton: {
-    marginTop: 10,
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-
-  submitText: {
-    fontWeight: "600",
+    padding: 12,
     fontSize: 15,
   },
-
-  divider: {
-    height: 1,
-    marginVertical: 25,
+  textArea: {
+    minHeight: 120,
+    textAlignVertical: "top",
   },
-
+  submitButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  submitText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
   footerNote: {
-    fontSize: 12,
     marginTop: 20,
-    lineHeight: 18,
+    fontSize: 13,
+    textAlign: "center",
   },
 });

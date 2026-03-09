@@ -12,12 +12,14 @@ import {
 } from "react-native";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
-import api from "../../config/api"; // import your API instance
+import api from "../../config/api";
+import { useLanguage } from "../../context/languagecontext";
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
@@ -51,7 +53,10 @@ export default function ProfileSetupScreen() {
 
   const handleContinue = async () => {
     if (!name || !location || primaryEmergency.length !== 10) {
-      Alert.alert("Error", "Please fill all required fields correctly");
+      Alert.alert(
+        t("error") || "Error",
+        t("fillProfileFields") || "Please fill all required fields correctly"
+      );
       return;
     }
 
@@ -67,7 +72,6 @@ export default function ProfileSetupScreen() {
     const user = JSON.parse(storedUser);
 
     try {
-      // Update user on backend
       const response = await api.put(`/api/users/${user._id}/emergencyContacts`, {
         emergencyContacts: {
           primary: formattedPrimary,
@@ -78,14 +82,15 @@ export default function ProfileSetupScreen() {
         profileCompleted: true,
       });
 
-      // Update AsyncStorage
       await AsyncStorage.setItem("user", JSON.stringify(response.data));
 
       router.replace("/(tabs)/explore");
     } catch (err: any) {
       Alert.alert(
-        "Error",
-        err?.response?.data?.message || "Failed to save profile. Please try again."
+        t("error") || "Error",
+        err?.response?.data?.message ||
+          t("profileSaveFailed") ||
+          "Failed to save profile. Please try again."
       );
     }
   };
@@ -103,7 +108,7 @@ export default function ProfileSetupScreen() {
           { color: themeColors.text },
         ]}
       >
-        Set up your profile
+        {t("setupProfile") || "Set up your profile"}
       </Text>
 
       <View style={styles.avatarWrapper}>
@@ -114,7 +119,7 @@ export default function ProfileSetupScreen() {
       </View>
 
       <TextInput
-        placeholder="Your name"
+        placeholder={t("yourName") || "Your name"}
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={name}
         onChangeText={setName}
@@ -129,7 +134,7 @@ export default function ProfileSetupScreen() {
       />
 
       <TextInput
-        placeholder="Your city"
+        placeholder={t("yourCity") || "Your city"}
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={location}
         onChangeText={setLocation}
@@ -143,7 +148,6 @@ export default function ProfileSetupScreen() {
         ]}
       />
 
-      {/* PRIMARY EMERGENCY */}
       <View
         style={[
           styles.phoneContainer,
@@ -162,7 +166,7 @@ export default function ProfileSetupScreen() {
           +91
         </Text>
         <TextInput
-          placeholder="Primary Emergency *"
+          placeholder={t("primaryEmergency") || "Primary Emergency *"}
           placeholderTextColor={theme === "dark" ? "#888" : "#999"}
           value={primaryEmergency}
           onChangeText={handlePrimaryChange}
@@ -175,7 +179,6 @@ export default function ProfileSetupScreen() {
         />
       </View>
 
-      {/* SECONDARY EMERGENCY */}
       <View
         style={[
           styles.phoneContainer,
@@ -194,7 +197,7 @@ export default function ProfileSetupScreen() {
           +91
         </Text>
         <TextInput
-          placeholder="Secondary Emergency"
+          placeholder={t("secondaryEmergency") || "Secondary Emergency"}
           placeholderTextColor={theme === "dark" ? "#888" : "#999"}
           value={secondaryEmergency}
           onChangeText={handleSecondaryChange}
@@ -226,7 +229,7 @@ export default function ProfileSetupScreen() {
             },
           ]}
         >
-          Continue
+          {t("continue") || "Continue"}
         </Text>
       </TouchableOpacity>
     </View>

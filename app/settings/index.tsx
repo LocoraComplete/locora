@@ -12,11 +12,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import { useLanguage } from "../../context/languagecontext";
 
 export default function Settings() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   const Section = ({ title }: { title: string }) => (
     <Text
@@ -69,27 +71,13 @@ export default function Settings() {
   );
 
   const handleLogout = async () => {
-    Alert.alert("Log Out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log Out",
-        style: "destructive",
-        onPress: async () => {
-          await AsyncStorage.removeItem("user");
-          router.replace("/(auth)/login");
-        },
-      },
-    ]);
-  };
-
-  const handleDelete = () => {
     Alert.alert(
-      "Delete Account",
-      "This action is permanent and cannot be undone.",
+      t("logout") || "Log Out",
+      t("confirmLogout") || "Are you sure you want to log out?",
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel") || "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: t("logout") || "Log Out",
           style: "destructive",
           onPress: async () => {
             await AsyncStorage.removeItem("user");
@@ -100,25 +88,53 @@ export default function Settings() {
     );
   };
 
-  // ✅ Navigate to ChangePassword with userId in query string
-  const goToChangePassword = async () => {
-  try {
-    const storedUser = await AsyncStorage.getItem("user");
-    if (!storedUser) {
-      Alert.alert("Error", "User not logged in!");
-      return;
-    }
-    const parsedUser = JSON.parse(storedUser);
+  const handleDelete = () => {
+    Alert.alert(
+      t("deleteAccount") || "Delete Account",
+      t("deleteAccountWarning") ||
+        "This action is permanent and cannot be undone.",
+      [
+        { text: t("cancel") || "Cancel", style: "cancel" },
+        {
+          text: t("delete") || "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.removeItem("user");
+            router.replace("/(auth)/login");
+          },
+        },
+      ]
+    );
+  };
 
-    router.push({
-      pathname: "/settings/change-password",
-      params: { userId: parsedUser.UserId }, // ✅ must match schema
-    });
-  } catch (err) {
-    console.log(err);
-    Alert.alert("Error", "Could not load user ID");
-  }
-};
+  // ✅ Navigate to ChangePassword with userId
+  const goToChangePassword = async () => {
+    try {
+      const storedUser = await AsyncStorage.getItem("user");
+
+      if (!storedUser) {
+        Alert.alert(
+          t("error") || "Error",
+          t("userNotLoggedIn") || "User not logged in!"
+        );
+        return;
+      }
+
+      const parsedUser = JSON.parse(storedUser);
+
+      router.push({
+        pathname: "/settings/change-password",
+        params: { userId: parsedUser.UserId },
+      });
+    } catch (err) {
+      console.log(err);
+
+      Alert.alert(
+        t("error") || "Error",
+        t("userIdLoadError") || "Could not load user ID"
+      );
+    }
+  };
 
   return (
     <SafeAreaView
@@ -130,25 +146,52 @@ export default function Settings() {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* ACCOUNT */}
-        <Section title="Account" />
-        <Item label="Change Password" onPress={goToChangePassword} />
-        <Item label="Emergency Contact" onPress={() => router.push("/settings/change-emergency")} />
-        <Item label="Language" onPress={() => router.push("/settings/language")} />
-        <Item label="App Theme" onPress={() => router.push("/settings/theme")} />
+        <Section title={t("account") || "Account"} />
+        <Item
+          label={t("changePassword") || "Change Password"}
+          onPress={goToChangePassword}
+        />
+        <Item
+          label={t("emergencyContact") || "Emergency Contact"}
+          onPress={() => router.push("/settings/change-emergency")}
+        />
+        <Item
+          label={t("language") || "Language"}
+          onPress={() => router.push("/settings/language")}
+        />
+        <Item
+          label={t("appTheme") || "App Theme"}
+          onPress={() => router.push("/settings/theme")}
+        />
 
-        {/* PRIVACY & SECURITY */}
-        <Section title="Privacy & Security" />
-        <Item label="Privacy Policy" onPress={() => router.push("/settings/privacy")} />
-        <Item label="Terms of Service" onPress={() => router.push("/settings/terms")} />
+        {/* PRIVACY */}
+        <Section title={t("privacySecurity") || "Privacy & Security"} />
+        <Item
+          label={t("privacyPolicy") || "Privacy Policy"}
+          onPress={() => router.push("/settings/privacy")}
+        />
+        <Item
+          label={t("termsOfService") || "Terms of Service"}
+          onPress={() => router.push("/settings/terms")}
+        />
 
         {/* ABOUT */}
-        <Section title="About" />
-        <Item label="About Us" onPress={() => router.push("/settings/about")} />
-        <Item label="App Version" onPress={() => router.push("/settings/version")} />
-        <Item label="Contact Support" onPress={() => router.push("/settings/support")} />
+        <Section title={t("about") || "About"} />
+        <Item
+          label={t("aboutUs") || "About Us"}
+          onPress={() => router.push("/settings/about")}
+        />
+        <Item
+          label={t("appVersion") || "App Version"}
+          onPress={() => router.push("/settings/version")}
+        />
+        <Item
+          label={t("contactSupport") || "Contact Support"}
+          onPress={() => router.push("/settings/support")}
+        />
 
         {/* DANGER ZONE */}
-        <Section title="Danger Zone" />
+        <Section title={t("dangerZone") || "Danger Zone"} />
 
         <TouchableOpacity
           style={[
@@ -161,9 +204,13 @@ export default function Settings() {
           onPress={handleLogout}
         >
           <Text
-            style={[styles.itemText, styles.boldText, { color: themeColors.text }]}
+            style={[
+              styles.itemText,
+              styles.boldText,
+              { color: themeColors.text },
+            ]}
           >
-            Log Out
+            {t("logout") || "Log Out"}
           </Text>
         </TouchableOpacity>
 
@@ -177,10 +224,8 @@ export default function Settings() {
           ]}
           onPress={handleDelete}
         >
-          <Text
-            style={[styles.itemText, styles.dangerText]}
-          >
-            Delete Account
+          <Text style={[styles.itemText, styles.dangerText]}>
+            {t("deleteAccount") || "Delete Account"}
           </Text>
         </TouchableOpacity>
 

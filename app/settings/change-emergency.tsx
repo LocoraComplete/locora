@@ -9,10 +9,12 @@ import {
 import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 
 export default function ChangeEmergency() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const themeColors = colors[theme];
 
   const [emergencyNumber, setEmergencyNumber] = useState("+91");
@@ -21,16 +23,27 @@ export default function ChangeEmergency() {
     const numberWithoutCode = emergencyNumber.replace("+91", "");
 
     if (numberWithoutCode.length !== 10) {
-      Alert.alert("Invalid Number", "Please enter exactly 10 digits after +91.");
+      Alert.alert(
+        t("invalidNumber") || "Invalid Number",
+        t("enter10Digits") || "Please enter exactly 10 digits after +91."
+      );
       return;
     }
 
     if (!/^\d{10}$/.test(numberWithoutCode)) {
-      Alert.alert("Invalid Number", "Emergency contact must contain only digits.");
+      Alert.alert(
+        t("invalidNumber") || "Invalid Number",
+        t("digitsOnlyEmergency") ||
+          "Emergency contact must contain only digits."
+      );
       return;
     }
 
-    Alert.alert("Success", "Emergency contact updated successfully!");
+    Alert.alert(
+      t("success") || "Success",
+      t("emergencyUpdated") ||
+        "Emergency contact updated successfully!"
+    );
   };
 
   const handleChange = (text: string) => {
@@ -54,7 +67,7 @@ export default function ChangeEmergency() {
           { color: theme === "dark" ? "#bbb" : "#555" },
         ]}
       >
-        Emergency Contact
+        {t("emergencyContact") || "Emergency Contact"}
       </Text>
 
       <TextInput
@@ -95,7 +108,7 @@ export default function ChangeEmergency() {
             },
           ]}
         >
-          Update Emergency Contact
+          {t("updateEmergencyContact") || "Update Emergency Contact"}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>

@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { colors } from "../../../config/colors";
 import { useTheme } from "../../../context/themecontext";
+import { useLanguage } from "../../../context/languagecontext";
 
 const profileImages: Record<string, any> = {
   "1": require("@/assets/images/user1.jpg"),
@@ -43,6 +44,8 @@ export default function UserProfile() {
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
+  const { t } = useLanguage();
+
   /* ================= START PRIVATE CHAT ================= */
   const startChat = async () => {
     try {
@@ -50,19 +53,19 @@ export default function UserProfile() {
 
       const storedUser = await AsyncStorage.getItem("user");
       if (!storedUser) {
-        Alert.alert("Please login first");
+        Alert.alert(t("loginFirst") || "Please login first");
         return;
       }
 
       const currentUser = JSON.parse(storedUser);
 
       if (!currentUser?.UserId) {
-        Alert.alert("User not found");
+        Alert.alert(t("userNotFound") || "User not found");
         return;
       }
 
       if (currentUser.UserId === id) {
-        Alert.alert("You cannot chat with yourself");
+        Alert.alert(t("cannotChatSelf") || "You cannot chat with yourself");
         return;
       }
 
@@ -75,7 +78,7 @@ export default function UserProfile() {
       );
 
       if (!res.data?.ChatId) {
-        Alert.alert("Chat creation failed");
+        Alert.alert(t("chatCreationFailed") || "Chat creation failed");
         return;
       }
 
@@ -92,7 +95,7 @@ export default function UserProfile() {
 
     } catch (err: any) {
       console.log("Start chat error:", err?.response?.data || err.message);
-      Alert.alert("Unable to start chat");
+      Alert.alert(t("unableStartChat") || "Unable to start chat");
     } finally {
       setLoading(false);
     }
@@ -108,7 +111,7 @@ export default function UserProfile() {
       {/* Back Button */}
       <TouchableOpacity onPress={() => router.back()}>
         <Text style={[styles.back, { color: themeColors.text }]}>
-          ← Back
+          ← {t("back") || "Back"}
         </Text>
       </TouchableOpacity>
 
@@ -133,7 +136,7 @@ export default function UserProfile() {
         </Text>
 
         <Text style={[styles.bio, { color: themeColors.text }]}>
-          ❤️ {likes} likes • 💬 {comments} comments
+          ❤️ {likes} {t("likes") || "likes"} • 💬 {comments} {t("comments") || "comments"}
         </Text>
 
         <TouchableOpacity
@@ -153,7 +156,7 @@ export default function UserProfile() {
                 { color: themeColors.background },
               ]}
             >
-              💬 Start Chat
+              💬 {t("startChat") || "Start Chat"}
             </Text>
           )}
         </TouchableOpacity>
@@ -165,7 +168,7 @@ export default function UserProfile() {
           { color: themeColors.text },
         ]}
       >
-        Posts by {username}
+        {t("postsBy") || "Posts by"} {username}
       </Text>
     </ScrollView>
   );

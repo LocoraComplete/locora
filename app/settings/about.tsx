@@ -6,10 +6,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 
 export default function About() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   const themeColors = colors[theme];
 
   return (
@@ -28,7 +30,7 @@ export default function About() {
             { color: themeColors.text },
           ]}
         >
-          About LOCORA
+          {t("aboutLocora") || "About LOCORA"}
         </Text>
 
         <Text
@@ -37,7 +39,7 @@ export default function About() {
             { color: theme === "dark" ? "#bbb" : "#777" },
           ]}
         >
-          Connecting people through meaningful digital experiences.
+          {t("aboutSubtitle") || "Connecting people through meaningful digital experiences."}
         </Text>
 
         {/* Section 1 */}
@@ -47,7 +49,7 @@ export default function About() {
             { color: themeColors.text },
           ]}
         >
-          Who We Are
+          {t("whoWeAre") || "Who We Are"}
         </Text>
         <Text
           style={[
@@ -55,10 +57,8 @@ export default function About() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          LOCORA is a modern digital platform built to simplify
-          connection and enhance interaction in a secure and
-          user-focused environment. Our goal is to create
-          technology that feels intuitive, reliable, and meaningful.
+          {t("whoWeAreDesc") ||
+            "LOCORA is a modern digital platform built to simplify connection and enhance interaction in a secure and user-focused environment. Our goal is to create technology that feels intuitive, reliable, and meaningful."}
         </Text>
 
         {/* Section 2 */}
@@ -68,7 +68,7 @@ export default function About() {
             { color: themeColors.text },
           ]}
         >
-          Our Mission
+          {t("ourMission") || "Our Mission"}
         </Text>
         <Text
           style={[
@@ -76,10 +76,8 @@ export default function About() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          Our mission is to empower users through seamless
-          communication and thoughtful design. We focus on
-          delivering a platform that prioritizes performance,
-          privacy, and user experience above everything else.
+          {t("ourMissionDesc") ||
+            "Our mission is to empower users through seamless communication and thoughtful design. We focus on delivering a platform that prioritizes performance, privacy, and user experience above everything else."}
         </Text>
 
         {/* Section 3 */}
@@ -89,7 +87,7 @@ export default function About() {
             { color: themeColors.text },
           ]}
         >
-          What We Offer
+          {t("whatWeOffer") || "What We Offer"}
         </Text>
         <Text
           style={[
@@ -97,10 +95,8 @@ export default function About() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          LOCORA provides a streamlined environment designed
-          for modern digital interaction. Through continuous
-          updates and innovation, we ensure the platform
-          remains stable, secure, and aligned with user needs.
+          {t("whatWeOfferDesc") ||
+            "LOCORA provides a streamlined environment designed for modern digital interaction. Through continuous updates and innovation, we ensure the platform remains stable, secure, and aligned with user needs."}
         </Text>
 
         {/* Section 4 */}
@@ -110,7 +106,7 @@ export default function About() {
             { color: themeColors.text },
           ]}
         >
-          Our Commitment
+          {t("ourCommitment") || "Our Commitment"}
         </Text>
         <Text
           style={[
@@ -118,10 +114,8 @@ export default function About() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          We are committed to maintaining high standards of
-          data protection, transparency, and reliability.
-          Our development approach focuses on long-term
-          sustainability and continuous improvement.
+          {t("ourCommitmentDesc") ||
+            "We are committed to maintaining high standards of data protection, transparency, and reliability. Our development approach focuses on long-term sustainability and continuous improvement."}
         </Text>
 
         {/* Contact Section */}
@@ -131,7 +125,7 @@ export default function About() {
             { color: themeColors.text },
           ]}
         >
-          Contact Information
+          {t("contactInformation") || "Contact Information"}
         </Text>
         <Text
           style={[
@@ -139,9 +133,8 @@ export default function About() {
             { color: theme === "dark" ? "#ccc" : "#555" },
           ]}
         >
-          For inquiries, support, or feedback, please reach out
-          through the Contact Support section within the app.
-          Our team aims to respond within 24–48 hours.
+          {t("contactInfoDesc") ||
+            "For inquiries, support, or feedback, please reach out through the Contact Support section within the app. Our team aims to respond within 24–48 hours."}
         </Text>
 
         {/* Footer */}

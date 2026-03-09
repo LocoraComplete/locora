@@ -1,9 +1,12 @@
 import { Stack } from "expo-router";
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import { useLanguage } from "../../../context/languagecontext";
 
 export default function GuideLayout() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   return (
@@ -23,11 +26,11 @@ export default function GuideLayout() {
     >
       <Stack.Screen
         name="index"
-        options={{ title: "Guides" }}
+        options={{ title: t("guides") || "Guides" }}
       />
       <Stack.Screen
         name="detail"
-        options={{ title: "Guide Details" }}
+        options={{ title: t("guideDetails") || "Guide Details" }}
       />
     </Stack>
   );

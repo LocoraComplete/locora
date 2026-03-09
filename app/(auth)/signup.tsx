@@ -13,11 +13,13 @@ import { Ionicons } from "@expo/vector-icons";
 import api from "../../config/api";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import { useLanguage } from "../../context/languagecontext";
 
 export default function Signup() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -25,8 +27,8 @@ export default function Signup() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [primaryContact, setPrimaryContact] = useState("");   // ✅ new
-  const [secondaryContact, setSecondaryContact] = useState(""); // ✅ new
+  const [primaryContact, setPrimaryContact] = useState("");
+  const [secondaryContact, setSecondaryContact] = useState("");
   const [secure1, setSecure1] = useState(true);
   const [secure2, setSecure2] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -34,29 +36,55 @@ export default function Signup() {
   const validateEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  const handlePhoneChange = (text: string, setter: any) => {
+    const digits = text.replace(/[^0-9]/g, "").slice(0, 10);
+    setter(digits);
+  };
+
   const handleSignup = async () => {
     const trimmedEmail = email.trim();
 
     if (!firstName.trim())
-      return Alert.alert("Error", "First name is required");
+      return Alert.alert(
+        t("error") || "Error",
+        t("firstNameRequired") || "First name is required"
+      );
 
     if (!validateEmail(trimmedEmail))
-      return Alert.alert("Error", "Invalid email format");
+      return Alert.alert(
+        t("error") || "Error",
+        t("invalidEmail") || "Invalid email format"
+      );
 
     if (phone.length !== 10)
-      return Alert.alert("Error", "Phone number must be exactly 10 digits");
+      return Alert.alert(
+        t("error") || "Error",
+        t("phone10Digits") || "Phone number must be exactly 10 digits"
+      );
 
-    if (!primaryContact.match(/^\d{10}$/))
-      return Alert.alert("Error", "Primary contact must be 10 digits");
+    if (primaryContact.length !== 10)
+      return Alert.alert(
+        t("error") || "Error",
+        t("primaryContact10") || "Primary contact must be 10 digits"
+      );
 
-    if (secondaryContact && !secondaryContact.match(/^\d{10}$/))
-      return Alert.alert("Error", "Secondary contact must be 10 digits");
+    if (secondaryContact && secondaryContact.length !== 10)
+      return Alert.alert(
+        t("error") || "Error",
+        t("secondaryContact10") || "Secondary contact must be 10 digits"
+      );
 
     if (password.length < 6)
-      return Alert.alert("Error", "Password must be at least 6 characters");
+      return Alert.alert(
+        t("error") || "Error",
+        t("passwordMin6") || "Password must be at least 6 characters"
+      );
 
     if (password !== confirmPassword)
-      return Alert.alert("Error", "Passwords do not match");
+      return Alert.alert(
+        t("error") || "Error",
+        t("passwordsDoNotMatch") || "Passwords do not match"
+      );
 
     const payload = {
       Name: lastName ? `${firstName} ${lastName}` : firstName,
@@ -65,21 +93,28 @@ export default function Signup() {
       Phone: "+91" + phone,
       Gender: "Other",
       emergencyContacts: {
-        primary: "+91" + primaryContact,
-        secondary: secondaryContact ? "+91" + secondaryContact : "",
+        primary: primaryContact,
+        secondary: secondaryContact ? secondaryContact : "",
       },
-      profileCompleted: false, // signup ke baad false
+      profileCompleted: false,
     };
 
     try {
       setLoading(true);
       await api.post("/api/users/register", payload);
-      Alert.alert("Success", "Account created!");
+
+      Alert.alert(
+        t("success") || "Success",
+        t("accountCreated") || "Account created!"
+      );
+
       router.replace("/(auth)/login");
     } catch (error: any) {
       Alert.alert(
-        "Signup Failed",
-        error?.response?.data?.message || "Server error"
+        t("signupFailed") || "Signup Failed",
+        error?.response?.data?.message ||
+          t("serverError") ||
+          "Server error"
       );
     } finally {
       setLoading(false);
@@ -94,12 +129,12 @@ export default function Signup() {
       ]}
     >
       <Text style={[styles.title, { color: themeColors.text }]}>
-        Create Account
+        {t("createAccount") || "Create Account"}
       </Text>
 
       <TextInput
         style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
-        placeholder="First Name"
+        placeholder={t("firstName") || "First Name"}
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={firstName}
         onChangeText={setFirstName}
@@ -107,7 +142,7 @@ export default function Signup() {
 
       <TextInput
         style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
-        placeholder="Last Name"
+        placeholder={t("lastName") || "Last Name"}
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={lastName}
         onChangeText={setLastName}
@@ -115,7 +150,7 @@ export default function Signup() {
 
       <TextInput
         style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
-        placeholder="Email"
+        placeholder={t("email") || "Email"}
         placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         keyboardType="email-address"
         autoCapitalize="none"
@@ -123,64 +158,46 @@ export default function Signup() {
         onChangeText={setEmail}
       />
 
-      {/* PHONE */}
       <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
         <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
         <TextInput
           style={[styles.phoneInput, { color: themeColors.text }]}
-          placeholder="Enter 10 digit number"
+          placeholder={t("enter10DigitNumber") || "Enter 10 digit number"}
           placeholderTextColor={theme === "dark" ? "#888" : "#999"}
           keyboardType="number-pad"
-          maxLength={10}
           value={phone}
-          onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ""))}
+          onChangeText={(text) => handlePhoneChange(text, setPhone)}
         />
       </View>
 
-     {/* PRIMARY EMERGENCY CONTACT */}
-<View
-  style={[
-    styles.phoneContainer,
-    { borderColor: themeColors.border, backgroundColor: themeColors.card },
-  ]}
->
-  <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
-  <TextInput
-    style={[styles.phoneInput, { color: themeColors.text }]}
-    placeholder="Primary Emergency Contact"
-    
-    placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-    keyboardType="number-pad"
-    maxLength={10}
-    value={primaryContact}
-    onChangeText={(text) => setPrimaryContact(text.replace(/[^0-9]/g, ""))}
-  />
-</View>
+      <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
+        <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
+        <TextInput
+          style={[styles.phoneInput, { color: themeColors.text }]}
+          placeholder={t("primaryEmergencyContact") || "Primary Emergency Contact"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          keyboardType="number-pad"
+          value={primaryContact}
+          onChangeText={(text) => handlePhoneChange(text, setPrimaryContact)}
+        />
+      </View>
 
-{/* SECONDARY EMERGENCY CONTACT */}
-<View
-  style={[
-    styles.phoneContainer,
-    { borderColor: themeColors.border, backgroundColor: themeColors.card },
-  ]}
->
-  <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
-  <TextInput
-    style={[styles.phoneInput, { color: themeColors.text }]}
-    placeholder="Secondary Emergency Contact"
-    placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-    keyboardType="number-pad"
-    maxLength={10}
-    value={secondaryContact}
-    onChangeText={(text) => setSecondaryContact(text.replace(/[^0-9]/g, ""))}
-  />
-</View>
+      <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
+        <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
+        <TextInput
+          style={[styles.phoneInput, { color: themeColors.text }]}
+          placeholder={t("secondaryEmergencyContact") || "Secondary Emergency Contact"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          keyboardType="number-pad"
+          value={secondaryContact}
+          onChangeText={(text) => handlePhoneChange(text, setSecondaryContact)}
+        />
+      </View>
 
-      {/* PASSWORD */}
       <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
         <TextInput
           style={[styles.passwordInput, { color: themeColors.text }]}
-          placeholder="Password"
+          placeholder={t("password") || "Password"}
           placeholderTextColor={theme === "dark" ? "#888" : "#999"}
           secureTextEntry={secure1}
           value={password}
@@ -191,11 +208,10 @@ export default function Signup() {
         </TouchableOpacity>
       </View>
 
-      {/* CONFIRM PASSWORD */}
       <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
         <TextInput
           style={[styles.passwordInput, { color: themeColors.text }]}
-          placeholder="Confirm Password"
+          placeholder={t("confirmPassword") || "Confirm Password"}
           placeholderTextColor={theme === "dark" ? "#888" : "#999"}
           secureTextEntry={secure2}
           value={confirmPassword}
@@ -206,9 +222,13 @@ export default function Signup() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={[styles.signupButton, { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" }, loading && { opacity: 0.7 }]} onPress={handleSignup} disabled={loading}>
+      <TouchableOpacity
+        style={[styles.signupButton, { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" }, loading && { opacity: 0.7 }]}
+        onPress={handleSignup}
+        disabled={loading}
+      >
         <Text style={[styles.signupText, { color: theme === "dark" ? "#000000" : "#ffffff" }]}>
-          {loading ? "Creating..." : "Sign Up"}
+          {loading ? t("creating") || "Creating..." : t("signUp") || "Sign Up"}
         </Text>
       </TouchableOpacity>
     </ScrollView>

@@ -7,12 +7,14 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 
 type ThemeMode = "Light" | "Dark" | "System";
 
 export default function ThemeScreen() {
   const { selectedMode, setThemeMode, theme } = useTheme();
+  const { t } = useLanguage();
 
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
@@ -51,7 +53,7 @@ export default function ThemeScreen() {
             <Text
               style={[styles.title, { color: themeColors.text }]}
             >
-              {mode}
+              {t(mode.toLowerCase() as any)}
             </Text>
             <Text
               style={[
@@ -85,7 +87,7 @@ export default function ThemeScreen() {
       <Text
         style={[styles.heading, { color: themeColors.text }]}
       >
-        Appearance
+        {t("appearance")}
       </Text>
 
       <Text
@@ -94,26 +96,26 @@ export default function ThemeScreen() {
           { color: themeColors.secondaryText },
         ]}
       >
-        Choose how the app looks on your device
+        {t("appearanceDesc")}
       </Text>
 
       <View style={{ marginTop: 30 }}>
         <Option
           mode="Light"
           icon="sunny-outline"
-          description="Bright and clean interface"
+          description={t("lightDesc")}
         />
 
         <Option
           mode="Dark"
           icon="moon-outline"
-          description="Easy on the eyes at night"
+          description={t("darkDesc")}
         />
 
         <Option
           mode="System"
           icon="phone-portrait-outline"
-          description="Follows your device settings"
+          description={t("systemDesc")}
         />
       </View>
     </SafeAreaView>

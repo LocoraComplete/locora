@@ -1,12 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import api from "../../config/api";
 import { useFocusEffect } from "@react-navigation/native";
 import { FlatList, View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 import { Image } from "react-native";
 
@@ -24,13 +25,14 @@ type User = {
 export default function Profile() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const themeColors = theme === "dark" ? colors.dark : colors.light;
- 
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<{ PostId: string; ImageUrl: string }[]>([]);
 
-  // Load user and posts whenever screen is focused
 useFocusEffect(
   useCallback(() => {
     let isActive = true;
@@ -66,6 +68,7 @@ useFocusEffect(
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
+
         {/* HEADER */}
         <View style={styles.header}>
           <Text style={[styles.username, { color: themeColors.text }]}>{user.Handle}</Text>
@@ -77,15 +80,14 @@ useFocusEffect(
 
         {/* PROFILE ROW */}
         <View style={styles.profileRow}>
-          {/* AVATAR */}
           <View style={styles.avatarWrapper}>
             <View style={[styles.avatarBorder, { borderColor: themeColors.text }]}>
               {user?.profilePic ? (
                 <Image
                   source={{
                     uri: user.profilePic.startsWith("http")
-  ? `${user.profilePic}?t=${Date.now()}`
-  : `${api.defaults.baseURL}${user.profilePic}?t=${Date.now()}`,
+                      ? `${user.profilePic}?t=${Date.now()}`
+                      : `${api.defaults.baseURL}${user.profilePic}?t=${Date.now()}`,
                   }}
                   style={styles.avatarPlaceholder}
                 />
@@ -96,7 +98,6 @@ useFocusEffect(
               )}
             </View>
 
-            {/* Plus icon */}
             <View style={[styles.plusIcon, { backgroundColor: themeColors.text }]}>
               <Ionicons name="add" size={16} color="#fff" />
             </View>
@@ -105,22 +106,30 @@ useFocusEffect(
           {/* STATS */}
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: themeColors.text }]}>{posts?.length || 0}</Text>
-              <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>Posts</Text>
+              <Text style={[styles.statNumber, { color: themeColors.text }]}>
+                {posts?.length || 0}
+              </Text>
+              <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>
+                {t("posts") || "Posts"}
+              </Text>
             </View>
 
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { color: themeColors.text }]}>
                 {user?.FollowersCount || 0}
               </Text>
-              <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>Followers</Text>
+              <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>
+                {t("followers") || "Followers"}
+              </Text>
             </View>
 
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { color: themeColors.text }]}>
                 {user?.FollowingCount || 0}
               </Text>
-              <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>Following</Text>
+              <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>
+                {t("following") || "Following"}
+              </Text>
             </View>
           </View>
         </View>
@@ -129,7 +138,7 @@ useFocusEffect(
         <View style={styles.bioBox}>
           <Text style={[styles.name, { color: themeColors.text }]}>{user.Name}</Text>
           <Text style={[styles.bio, { color: themeColors.secondaryText }]}>
-            {user.Bio || "Welcome to Locora 🌍"}
+            {user.Bio || t("defaultBio") || "Welcome to Locora 🌍"}
           </Text>
         </View>
 
@@ -139,21 +148,27 @@ useFocusEffect(
             style={[styles.outlineButton, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}
             onPress={() => router.push("/edit-profile")}
           >
-            <Text style={[styles.buttonText, { color: themeColors.text }]}>Edit Profile</Text>
+            <Text style={[styles.buttonText, { color: themeColors.text }]}>
+              {t("editProfile") || "Edit Profile"}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.outlineButton, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}
             onPress={() => router.push("/add-post")}
           >
-            <Text style={[styles.buttonText, { color: themeColors.text }]}>Add Post</Text>
+            <Text style={[styles.buttonText, { color: themeColors.text }]}>
+              {t("addPost") || "Add Post"}
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* POSTS */}
         {posts.length === 0 ? (
           <View style={styles.noPostsContainer}>
-            <Text style={[styles.noPostsText, { color: themeColors.secondaryText }]}>No posts yet</Text>
+            <Text style={[styles.noPostsText, { color: themeColors.secondaryText }]}>
+              {t("noPostsYet") || "No posts yet"}
+            </Text>
           </View>
         ) : (
           <FlatList

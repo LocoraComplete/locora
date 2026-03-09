@@ -19,6 +19,7 @@ import {
 
 import { colors } from "../../../config/colors";
 import { useTheme } from "../../../context/themecontext";
+import { useLanguage } from "../../../context/languagecontext";
 
 export default function Room() {
   const {
@@ -41,6 +42,7 @@ export default function Room() {
 
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   const [USER_ID, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -91,7 +93,7 @@ export default function Room() {
       console.log("Load messages error", err?.response?.data || err.message);
 
       if (err?.response?.status === 403) {
-        Alert.alert("You are no longer in this chat");
+        Alert.alert(t("chatAccessRemoved") || "You are no longer in this chat");
         router.replace("/chat");
       }
     }
@@ -179,7 +181,7 @@ export default function Room() {
                 { color: themeColors.secondaryText },
               ]}
             >
-              Tap to view profile
+              {t("tapViewProfile") || "Tap to view profile"}
             </Text>
           </Pressable>
         ) : (
@@ -198,7 +200,7 @@ export default function Room() {
                 { color: themeColors.secondaryText },
               ]}
             >
-              Tap to view group info
+              {t("tapViewGroupInfo") || "Tap to view group info"}
             </Text>
           </TouchableOpacity>
         )}
@@ -255,7 +257,7 @@ export default function Room() {
                     { color: themeColors.text },
                   ]}
                 >
-                  {msg.SenderName || otherUserHandle || "User"}
+                  {msg.SenderName || otherUserHandle || t("user") || "User"}
                 </Text>
               )}
 
@@ -283,7 +285,7 @@ export default function Room() {
               backgroundColor: themeColors.card,
             },
           ]}
-          placeholder="Type a message..."
+          placeholder={t("typeMessage") || "Type a message..."}
           placeholderTextColor={theme === "dark" ? "#999" : "#666"}
           value={inputText}
           onChangeText={setInputText}
@@ -302,7 +304,7 @@ export default function Room() {
               { color: themeColors.background },
             ]}
           >
-            Send
+            {t("send") || "Send"}
           </Text>
         </TouchableOpacity>
       </View>

@@ -15,11 +15,14 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE_URL } from "../../../config/api";
 import { colors } from "../../../config/colors";
 import { useTheme } from "../../../context/themecontext";
+import { useLanguage } from "../../../context/languagecontext";
 
 export default function ExploreScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
+
+  const { t } = useLanguage();
 
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] =
@@ -61,7 +64,7 @@ export default function ExploreScreen() {
         setFilteredEvents(e);
         setFilteredFood(f);
       } catch (err: any) {
-        setError("Failed to load data. Check backend connection.");
+        setError(t("dataLoadFailed") || "Failed to load data. Check backend connection.");
       } finally {
         setLoading(false);
       }
@@ -124,6 +127,13 @@ export default function ExploreScreen() {
     return [];
   };
 
+  const getCategoryLabel = (cat: string) => {
+    if (cat === "places") return t("places") || "Places";
+    if (cat === "events") return t("events") || "Events";
+    if (cat === "food") return t("food") || "Food";
+    return cat;
+  };
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: themeColors.background }}
@@ -131,7 +141,7 @@ export default function ExploreScreen() {
       <ScrollView style={styles.container}>
         {/* Search bar */}
         <TextInput
-          placeholder="Search locations..."
+          placeholder={t("searchLocations") || "Search locations..."}
           placeholderTextColor={theme === "dark" ? "#999" : "#777"}
           style={[
             styles.searchBar,
@@ -172,7 +182,7 @@ export default function ExploreScreen() {
                   },
                 ]}
               >
-                {cat.toUpperCase()}
+                {getCategoryLabel(cat)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -184,7 +194,7 @@ export default function ExploreScreen() {
             { color: themeColors.text },
           ]}
         >
-          Recommended {selectedCategory.toUpperCase()}
+          {t("recommended") || "Recommended"} {getCategoryLabel(selectedCategory)}
         </Text>
 
         {notFound && (
@@ -195,7 +205,7 @@ export default function ExploreScreen() {
               color: themeColors.text,
             }}
           >
-            No Results Found
+            {t("noResults") || "No Results Found"}
           </Text>
         )}
 
@@ -207,7 +217,6 @@ export default function ExploreScreen() {
           />
         )}
 
-        {/* Error */}
         {!loading && error ? (
           <Text
             style={{
@@ -219,7 +228,6 @@ export default function ExploreScreen() {
             {error}
           </Text>
         ) : (
-          // Display posts
           getCategoryData().map((item) => (
             <TouchableOpacity
               key={item._id || item.id}
@@ -230,7 +238,7 @@ export default function ExploreScreen() {
                   backgroundColor: themeColors.card,
                 },
               ]}
-             onPress={() =>
+              onPress={() =>
                 router.push({
                   pathname: "/explore/[id]",
                   params: {

@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../../config/colors";
 import { useTheme } from "../../../context/themecontext";
+import { useLanguage } from "../../../context/languagecontext";
 
 export default function PostDetails() {
   const { id, name, description, image } = useLocalSearchParams();
@@ -17,6 +18,8 @@ export default function PostDetails() {
 
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
+
+  const { t } = useLanguage();
 
   const imageSource =
     image && typeof image === "string"
@@ -58,7 +61,7 @@ export default function PostDetails() {
                 { color: themeColors.background },
               ]}
             >
-              View 360° Map
+              {t("view360Map") || "View 360° Map"}
             </Text>
           </TouchableOpacity>
 
@@ -86,7 +89,7 @@ export default function PostDetails() {
                 { color: themeColors.text },
               ]}
             >
-              Check Distance
+              {t("checkDistance") || "Check Distance"}
             </Text>
           </TouchableOpacity>
         </View>

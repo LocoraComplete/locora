@@ -4,24 +4,30 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import { useLanguage } from "../../context/languagecontext";
 
 export default function Logout() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          await AsyncStorage.removeItem("user");
-          router.replace("/(auth)/login");
+    Alert.alert(
+      t("logout") || "Logout",
+      t("confirmLogout") || "Are you sure you want to logout?",
+      [
+        { text: t("cancel") || "Cancel", style: "cancel" },
+        {
+          text: t("logout") || "Logout",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.removeItem("user");
+            router.replace("/(auth)/login");
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
@@ -50,7 +56,7 @@ export default function Logout() {
             },
           ]}
         >
-          Confirm Logout
+          {t("confirmLogout") || "Confirm Logout"}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>

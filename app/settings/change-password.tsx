@@ -18,7 +18,6 @@ export default function ChangePassword() {
   const { theme } = useTheme();
   const themeColors = colors[theme];
   const { t } = useLanguage();
-
   const { userId } = useLocalSearchParams<{ userId: string }>();
 
   const [oldPassword, setOldPassword] = useState("");
@@ -28,96 +27,88 @@ export default function ChangePassword() {
   const [loading, setLoading] = useState(false);
 
   const handleChangePassword = async () => {
-    if (!userId) {
-      Alert.alert(t("error"), "User ID is missing!");
-      return;
-    }
+    if (!userId) return Alert.alert(t("error") || "Error", t("userIdMissing") || "User ID missing!");
 
-    if (!oldPassword || !newPassword) {
-      Alert.alert(t("error"), t("fillAllFields"));
-      return;
-    }
-    if (oldPassword.length < 6) {
-      Alert.alert(t("invalidPassword"), t("oldPasswordMin6"));
-      return;
-    }
-    if (newPassword.length < 6) {
-      Alert.alert(t("invalidPassword"), t("newPasswordMin6"));
-      return;
-    }
-    if (oldPassword === newPassword) {
-      Alert.alert(t("invalidPassword"), t("passwordsCannotMatch"));
-      return;
-    }
+    if (!oldPassword || !newPassword)
+      return Alert.alert(t("error") || "Error", t("fillAllFields") || "Please fill all fields");
+
+    if (oldPassword.length < 6)
+      return Alert.alert(t("invalidPassword") || "Invalid Password", t("oldPasswordMin6") || "Old password must be at least 6 characters");
+
+    if (newPassword.length < 6)
+      return Alert.alert(t("invalidPassword") || "Invalid Password", t("newPasswordMin6") || "New password must be at least 6 characters");
+
+    if (oldPassword === newPassword)
+      return Alert.alert(t("invalidPassword") || "Invalid Password", t("passwordsCannotMatch") || "Old and new passwords cannot match");
 
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `http://10.115.189.72:5000/api/users/${userId}/check-password`,
+      const checkResponse = await fetch(
+        `https://locora-backend.onrender.com/api/users/check-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ oldPassword }),
+          body: JSON.stringify({ userId, oldPassword }),
         }
       );
 
-      const text = await response.text();
-      let data: any = null;
+      let checkData: any;
+      const text = await checkResponse.text();
+
       try {
-        data = JSON.parse(text);
+        checkData = JSON.parse(text);
       } catch {
-        console.log("Invalid JSON response:", text);
-        Alert.alert(t("error"), t("somethingWentWrong"));
+        console.log("Check password invalid JSON response:", text);
+        Alert.alert(t("error") || "Error", t("serverInvalidResponse") || "Server returned invalid response");
         setLoading(false);
         return;
       }
 
-      if (!data.valid) {
-        Alert.alert(t("error"), t("oldPasswordIncorrect"));
+      if (!checkData.valid) {
+        Alert.alert(t("error") || "Error", checkData.message || t("oldPasswordIncorrect") || "Old password is incorrect");
         setLoading(false);
         return;
       }
 
       const updateResponse = await fetch(
-        `http://10.115.189.72:5000/api/users/${userId}/update-password`,
+        `https://locora-backend.onrender.com/api/users/update-password`,
         {
-          method: "PUT",
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ newPassword }),
+          body: JSON.stringify({ userId, oldPassword, newPassword }),
         }
       );
 
-      const updateText = await updateResponse.text();
-      let updateData: any = null;
+      let updateData: any;
+
       try {
-        updateData = JSON.parse(updateText);
+        updateData = await updateResponse.json();
       } catch {
-        console.log("Invalid JSON response:", updateText);
-        Alert.alert(t("error"), t("somethingWentWrong"));
+        const text = await updateResponse.text();
+        console.log("Update password error:", text);
+        Alert.alert(t("error") || "Error", t("serverInvalidResponse") || "Server returned invalid response");
         setLoading(false);
         return;
       }
 
       if (updateData.success) {
-        Alert.alert(t("success"), t("passwordChanged"));
+        Alert.alert(t("success") || "Success", t("passwordChanged") || "Password changed successfully");
         setOldPassword("");
         setNewPassword("");
       } else {
-        Alert.alert(t("error"), t("somethingWentWrong"));
+        Alert.alert(t("error") || "Error", updateData.message || t("somethingWentWrong") || "Something went wrong");
       }
     } catch (err) {
-      console.log(err);
-      Alert.alert(t("error"), t("somethingWentWrong"));
+      console.log("Password change error:", err);
+      Alert.alert(t("error") || "Error", t("somethingWentWrong") || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: themeColors.background }]}
-    >
+    <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       <Text style={[styles.label, { color: theme === "dark" ? "#bbb" : "#555" }]}>
         {t("oldPassword") || "Old Password"}
       </Text>
@@ -140,11 +131,7 @@ export default function ChangePassword() {
           secureTextEntry={!showOldPassword}
         />
         <TouchableOpacity onPress={() => setShowOldPassword(!showOldPassword)}>
-          <Ionicons
-            name={showOldPassword ? "eye-outline" : "eye-off-outline"}
-            size={22}
-            color={themeColors.text}
-          />
+          <Ionicons name={showOldPassword ? "eye-outline" : "eye-off-outline"} size={22} color={themeColors.text} />
         </TouchableOpacity>
       </View>
 
@@ -170,11 +157,7 @@ export default function ChangePassword() {
           secureTextEntry={!showNewPassword}
         />
         <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-          <Ionicons
-            name={showNewPassword ? "eye-outline" : "eye-off-outline"}
-            size={22}
-            color={themeColors.text}
-          />
+          <Ionicons name={showNewPassword ? "eye-outline" : "eye-off-outline"} size={22} color={themeColors.text} />
         </TouchableOpacity>
       </View>
 
@@ -184,7 +167,7 @@ export default function ChangePassword() {
         disabled={loading}
       >
         <Text style={[styles.buttonText, { color: theme === "dark" ? "#000" : "#fff" }]}>
-          {loading ? t("updating") : t("updatePassword")}
+          {loading ? (t("updating") || "Updating...") : (t("updatePassword") || "Update Password")}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>

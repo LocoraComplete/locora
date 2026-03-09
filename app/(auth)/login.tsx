@@ -16,11 +16,13 @@ import { Ionicons } from "@expo/vector-icons";
 import api from "../../config/api";
 import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
+import { useLanguage } from "../../context/languagecontext";
 
 export default function Login() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,14 +34,15 @@ export default function Login() {
     return emailRegex.test(email);
   };
 
-   const requestLocationPermission = async () => {
+  const requestLocationPermission = async () => {
     const { status } =
       await Location.requestForegroundPermissionsAsync();
 
     if (status !== "granted") {
       Alert.alert(
-        "Location Required",
-        "Location permission is required for SOS feature to work."
+        t("locationRequired") || "Location Required",
+        t("locationPermissionMessage") ||
+          "Location permission is required for SOS feature to work."
       );
       return false;
     }
@@ -51,11 +54,17 @@ export default function Login() {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !password.trim()) {
-      return Alert.alert("Error", "Please fill all fields");
+      return Alert.alert(
+        t("error") || "Error",
+        t("fillAllFields") || "Please fill all fields"
+      );
     }
 
     if (!validateEmail(trimmedEmail)) {
-      return Alert.alert("Error", "Invalid email format");
+      return Alert.alert(
+        t("error") || "Error",
+        t("invalidEmail") || "Invalid email format"
+      );
     }
 
     try {
@@ -68,23 +77,26 @@ export default function Login() {
 
       console.log("✅ Login response:", res.data);
 
-     await AsyncStorage.setItem(
-  "user",
-  JSON.stringify(res.data)
-);
+      await AsyncStorage.setItem(
+        "user",
+        JSON.stringify(res.data)
+      );
 
-      Alert.alert("Success", `Welcome ${res.data.Name}`);
+      Alert.alert(
+        t("success") || "Success",
+        `${t("welcome") || "Welcome"} ${res.data.Name}`
+      );
 
       router.replace("/explore");
 
       await AsyncStorage.setItem("user", JSON.stringify(res.data));
 
       Alert.alert(
-        "Success",
-        `Welcome ${res.data.Name}`,
+        t("success") || "Success",
+        `${t("welcome") || "Welcome"} ${res.data.Name}`,
         [
           {
-            text: "Continue",
+            text: t("continue") || "Continue",
             onPress: async () => {
               const permissionGranted =
                 await requestLocationPermission();
@@ -99,7 +111,7 @@ export default function Login() {
       );
     } catch (error: any) {
       Alert.alert(
-        "Login Failed",
+        t("loginFailed") || "Login Failed",
         error?.response?.data?.message || error.message
       );
     } finally {
@@ -132,7 +144,7 @@ export default function Login() {
             color: themeColors.text,
           },
         ]}
-        placeholder="Email"
+        placeholder={t("email") || "Email"}
         placeholderTextColor={
           theme === "dark" ? "#888" : "#999"
         }
@@ -156,7 +168,7 @@ export default function Login() {
             styles.passwordInput,
             { color: themeColors.text },
           ]}
-          placeholder="Password"
+          placeholder={t("password") || "Password"}
           placeholderTextColor={
             theme === "dark" ? "#888" : "#999"
           }
@@ -194,7 +206,9 @@ export default function Login() {
             },
           ]}
         >
-          {loading ? "Logging in..." : "Login"}
+          {loading
+            ? t("loggingIn") || "Logging in..."
+            : t("login") || "Login"}
         </Text>
       </TouchableOpacity>
 
@@ -207,7 +221,8 @@ export default function Login() {
             { color: "#4F46E5" },
           ]}
         >
-          Don’t have an account? Sign Up
+          {t("noAccount") ||
+            "Don’t have an account? Sign Up"}
         </Text>
       </TouchableOpacity>
     </View>

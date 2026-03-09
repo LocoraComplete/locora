@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import { useLanguage } from "../../../context/languagecontext";
 
 export default function GuideDetail() {
   const router = useRouter();
@@ -19,6 +20,8 @@ export default function GuideDetail() {
   console.log("Guide params:", params);
 
   const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   const languages = params.languages
@@ -62,7 +65,7 @@ export default function GuideDetail() {
             <Text
               style={[styles.headerTitle, { color: themeColors.text }]}
             >
-              Official Verification
+              {t("officialVerification") || "Official Verification"}
             </Text>
 
             <View style={{ width: 20 }} />
@@ -88,7 +91,7 @@ export default function GuideDetail() {
                   fontWeight: "600",
                 }}
               >
-                Certified Guide — {params.location}
+                {t("certifiedGuide") || "Certified Guide"} — {params.location}
               </Text>
             </View>
           </View>
@@ -109,7 +112,7 @@ export default function GuideDetail() {
                   { color: themeColors.text }
                 ]}
               >
-                📞 Call
+                📞 {t("call") || "Call"}
               </Text>
             </TouchableOpacity>
 
@@ -126,7 +129,7 @@ export default function GuideDetail() {
                   { color: themeColors.text }
                 ]}
               >
-                ✉ Email
+                ✉ {t("email") || "Email"}
               </Text>
             </TouchableOpacity>
 
@@ -154,7 +157,7 @@ export default function GuideDetail() {
                 { color: themeColors.text },
               ]}
             >
-              Tourism License
+              {t("tourismLicense") || "Tourism License"}
             </Text>
 
             <View
@@ -172,7 +175,7 @@ export default function GuideDetail() {
                   { color: themeColors.text },
                 ]}
               >
-                LICENSE ID: RTD-2024-X452
+                {t("licenseId") || "LICENSE ID"}: RTD-2024-X452
               </Text>
 
               <Text
@@ -181,7 +184,7 @@ export default function GuideDetail() {
                   { color: themeColors.secondaryText },
                 ]}
               >
-                Verified by Rajasthan Tourism Dept.
+                {t("verifiedByTourism") || "Verified by Rajasthan Tourism Dept."}
               </Text>
             </View>
           </View>
@@ -205,7 +208,7 @@ export default function GuideDetail() {
                 { color: themeColors.text },
               ]}
             >
-              Identity Proof
+              {t("identityProof") || "Identity Proof"}
             </Text>
 
             <View
@@ -220,7 +223,7 @@ export default function GuideDetail() {
                   { color: themeColors.text },
                 ]}
               >
-                IDENTITY VERIFIED
+                {t("identityVerified") || "IDENTITY VERIFIED"}
               </Text>
 
               <Text
@@ -235,7 +238,7 @@ export default function GuideDetail() {
                   },
                 ]}
               >
-                VERIFIED
+                {t("verified") || "VERIFIED"}
               </Text>
             </View>
           </View>

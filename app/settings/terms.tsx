@@ -6,10 +6,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 
 export default function TermsOfService() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const themeColors =
     theme === "dark" ? colors.dark : colors.light;
 
@@ -23,7 +26,7 @@ export default function TermsOfService() {
       <ScrollView contentContainerStyle={styles.content}>
 
         <Text style={[styles.title, { color: themeColors.text }]}>
-          Terms of Service
+          {t("termsTitle")}
         </Text>
 
         <Text
@@ -32,100 +35,77 @@ export default function TermsOfService() {
             { color: themeColors.tertiaryText },
           ]}
         >
-          Last Updated: January 2026
+          {t("termsLastUpdated")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          1. Acceptance of Terms
+          {t("termsSection1Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          By accessing or using LOCORA, you agree to be bound by these
-          Terms of Service. If you do not agree to these terms,
-          you may not use the platform.
+          {t("termsSection1")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          2. Eligibility
+          {t("termsSection2Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          You must be at least 18 years of age to use LOCORA.
-          By using the platform, you represent and warrant that
-          you meet this requirement.
+          {t("termsSection2")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          3. User Responsibilities
+          {t("termsSection3Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          You are responsible for maintaining the confidentiality
-          of your account credentials and for all activities that
-          occur under your account. You agree to provide accurate
-          information and keep your account details updated.
+          {t("termsSection3")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          4. Prohibited Conduct
+          {t("termsSection4Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          Users may not engage in unlawful, abusive, harassing,
-          or fraudulent behavior while using LOCORA. Any misuse
-          of the platform may result in suspension or permanent
-          termination of access.
+          {t("termsSection4")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          5. Intellectual Property
+          {t("termsSection5Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          All content, trademarks, branding, and intellectual
-          property related to LOCORA remain the exclusive
-          property of LOCORA. Unauthorized use is strictly prohibited.
+          {t("termsSection5")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          6. Limitation of Liability
+          {t("termsSection6Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          LOCORA is provided on an “as-is” and “as-available”
-          basis. We do not guarantee uninterrupted access and
-          are not liable for indirect, incidental, or consequential
-          damages arising from the use of the platform.
+          {t("termsSection6")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          7. Termination
+          {t("termsSection7Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          We reserve the right to suspend or terminate accounts
-          that violate these terms or compromise the integrity
-          of the platform.
+          {t("termsSection7")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          8. Changes to Terms
+          {t("termsSection8Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          LOCORA may update these Terms of Service at any time.
-          Continued use of the platform after changes constitutes
-          acceptance of the revised terms.
+          {t("termsSection8")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          9. Governing Law
+          {t("termsSection9Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          These Terms shall be governed and interpreted in
-          accordance with applicable laws of the jurisdiction
-          in which LOCORA operates.
+          {t("termsSection9")}
         </Text>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          10. Contact Information
+          {t("termsSection10Title")}
         </Text>
         <Text style={[styles.paragraph, { color: themeColors.secondaryText }]}>
-          For questions regarding these Terms of Service,
-          please contact us through the support section
-          within the application.
+          {t("termsSection10")}
         </Text>
 
         <Text
@@ -134,7 +114,7 @@ export default function TermsOfService() {
             { color: themeColors.tertiaryText },
           ]}
         >
-          © 2026 LOCORA. All rights reserved.
+          {t("termsFooter")}
         </Text>
 
       </ScrollView>
@@ -147,31 +127,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingHorizontal: 22,
-    paddingTop: 40,
-    paddingBottom: 60,
+    padding: 20,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 26,
     fontWeight: "700",
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 13,
-    marginBottom: 30,
+    marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "600",
-    marginTop: 25,
-    marginBottom: 8,
+    marginTop: 16,
+    marginBottom: 6,
   },
   paragraph: {
-    fontSize: 14,
+    fontSize: 15,
     lineHeight: 22,
+    marginBottom: 10,
   },
   footer: {
-    fontSize: 12,
-    marginTop: 40,
+    fontSize: 13,
+    marginTop: 20,
+    textAlign: "center",
   },
 });

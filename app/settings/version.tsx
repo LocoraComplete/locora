@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../context/themecontext";
+import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
 
 export default function AppVersion() {
@@ -14,6 +15,8 @@ export default function AppVersion() {
   const build = "100";
 
   const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   return (
@@ -38,7 +41,7 @@ export default function AppVersion() {
               { color: themeColors.secondaryText },
             ]}
           >
-            Built for meaningful digital connections.
+            {t("appTagline")}
           </Text>
         </View>
 
@@ -59,7 +62,7 @@ export default function AppVersion() {
                 { color: themeColors.secondaryText },
               ]}
             >
-              Version
+              {t("version")}
             </Text>
             <Text
               style={[styles.value, { color: themeColors.text }]}
@@ -75,7 +78,7 @@ export default function AppVersion() {
                 { color: themeColors.secondaryText },
               ]}
             >
-              Build
+              {t("build")}
             </Text>
             <Text
               style={[styles.value, { color: themeColors.text }]}
@@ -91,12 +94,12 @@ export default function AppVersion() {
                 { color: themeColors.secondaryText },
               ]}
             >
-              Release Channel
+              {t("releaseChannel")}
             </Text>
             <Text
               style={[styles.value, { color: themeColors.text }]}
             >
-              Production
+              {t("production")}
             </Text>
           </View>
         </View>
@@ -108,9 +111,7 @@ export default function AppVersion() {
             { color: themeColors.secondaryText },
           ]}
         >
-          LOCORA is continuously improving to deliver a seamless and
-          secure experience. Updates may include performance
-          enhancements, feature improvements, and stability fixes.
+          {t("appVersionDesc")}
         </Text>
 
         {/* Footer */}
@@ -120,7 +121,7 @@ export default function AppVersion() {
             { color: themeColors.secondaryText },
           ]}
         >
-          © 2026 LOCORA
+          {t("appFooter")}
         </Text>
 
       </ScrollView>

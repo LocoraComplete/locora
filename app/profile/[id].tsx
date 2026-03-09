@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLanguage } from "../../context/languagecontext";
 
 type User = {
   UserId: string;
@@ -24,6 +25,7 @@ type User = {
 export default function PublicProfile() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { t } = useLanguage();
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -44,8 +46,8 @@ export default function PublicProfile() {
         setUser(res.data);
       } catch (error: any) {
         Alert.alert(
-          "Error",
-          error?.response?.data?.message || "Failed to load profile"
+          t("error") || "Error",
+          error?.response?.data?.message || t("failedLoadProfile") || "Failed to load profile"
         );
       } finally {
         setLoading(false);
@@ -66,7 +68,9 @@ export default function PublicProfile() {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
         <ActivityIndicator size="large" color="#000" />
-        <Text style={{ marginTop: 10 }}>Loading...</Text>
+        <Text style={{ marginTop: 10 }}>
+          {t("loading") || "Loading..."}
+        </Text>
       </SafeAreaView>
     );
   }
@@ -74,7 +78,7 @@ export default function PublicProfile() {
   if (!user) {
     return (
       <SafeAreaView style={[styles.container, { justifyContent: "center", alignItems: "center" }]}>
-        <Text>User not found</Text>
+        <Text>{t("userNotFound") || "User not found"}</Text>
       </SafeAreaView>
     );
   }
@@ -108,15 +112,15 @@ export default function PublicProfile() {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Posts</Text>
+              <Text style={styles.statLabel}>{t("posts") || "Posts"}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Followers</Text>
+              <Text style={styles.statLabel}>{t("followers") || "Followers"}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>Following</Text>
+              <Text style={styles.statLabel}>{t("following") || "Following"}</Text>
             </View>
           </View>
         </View>
@@ -124,7 +128,9 @@ export default function PublicProfile() {
         {/* NAME + BIO */}
         <View style={styles.bioBox}>
           <Text style={styles.name}>{user.Name}</Text>
-          <Text style={styles.bio}>Explorer on Locora 🌍</Text>
+          <Text style={styles.bio}>
+            {t("explorerBio") || "Explorer on Locora 🌍"}
+          </Text>
         </View>
 
         {/* ACTION BUTTON */}
@@ -153,17 +159,21 @@ export default function PublicProfile() {
                   },
                 });
               } catch (err) {
-                Alert.alert("Failed to start chat");
+                Alert.alert(t("failedStartChat") || "Failed to start chat");
               }
             }}
           >
-            <Text style={styles.messageText}>Message</Text>
+            <Text style={styles.messageText}>
+              {t("message") || "Message"}
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* POSTS PLACEHOLDER */}
         <View style={styles.noPostsContainer}>
-          <Text style={styles.noPostsText}>No posts yet</Text>
+          <Text style={styles.noPostsText}>
+            {t("noPostsYet") || "No posts yet"}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

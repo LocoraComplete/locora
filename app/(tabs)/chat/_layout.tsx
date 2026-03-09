@@ -4,10 +4,12 @@ import { useEffect } from "react";
 
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
+import { useLanguage } from "../../../context/languagecontext";
 
 export default function ChatLayout() {
   const { theme } = useTheme();
   const themeColors = colors[theme];
+  const { t } = useLanguage();
 
   useEffect(() => {
     const socket = getSocket();
@@ -39,14 +41,14 @@ export default function ChatLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Chats",
+          title: t("chats") || "Chats",
         }}
       />
 
       <Stack.Screen
         name="room"
         options={{
-          title: "Chat Room",
+          title: t("chatRoom") || "Chat Room",
         }}
       />
     </Stack>

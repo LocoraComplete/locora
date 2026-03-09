@@ -12,6 +12,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
 import { useState } from "react";
+import { useLanguage } from "../../../context/languagecontext";
 
 const guides = [
   {
@@ -52,6 +53,8 @@ const guides = [
 export default function Guide() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { t } = useLanguage();
+
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,7 +83,7 @@ export default function Guide() {
         }}
       >
         <Text style={[styles.heading, { color: themeColors.text }]}>
-          Guide Directory
+          {t("guideDirectory") || "Guide Directory"}
         </Text>
 
         <TextInput
@@ -92,7 +95,7 @@ export default function Guide() {
               borderColor: themeColors.border,
             },
           ]}
-          placeholder="Search by city or language..."
+          placeholder={t("searchGuide") || "Search by city or language..."}
           placeholderTextColor={themeColors.secondaryText}
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -153,7 +156,7 @@ export default function Guide() {
                     { color: themeColors.secondaryText },
                   ]}
                 >
-                  🎖 {guide.experience} yrs Experience
+                  🎖 {guide.experience} {t("yearsExperience") || "yrs Experience"}
                 </Text>
 
                 <View style={styles.footerRow}>
@@ -172,7 +175,7 @@ export default function Guide() {
                       { color: themeColors.text },
                     ]}
                   >
-                    Profile →
+                    {t("profile") || "Profile"} →
                   </Text>
                 </View>
               </View>
@@ -188,7 +191,7 @@ export default function Guide() {
                 fontWeight: "600",
               }}
             >
-              No guides found 
+              {t("noGuidesFound") || "No guides found"}
             </Text>
           )}
         </ScrollView>
