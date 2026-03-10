@@ -1,21 +1,21 @@
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  Alert,
-  StyleSheet,
   ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import api from "../config/api";
-import { useRouter } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../context/languagecontext";
 
+import api from "../config/api";
 console.log("API BASE URL:", api.defaults.baseURL);
 
 export default function AddPost() {

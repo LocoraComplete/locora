@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
   Alert,
   Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLanguage } from "../context/languagecontext";
 
-import api from "../config/api";
 import * as ImagePicker from "expo-image-picker";
 
+import api from "../config/api";
 export default function EditProfile() {
   const router = useRouter();
   const { t } = useLanguage();
@@ -102,11 +102,11 @@ export default function EditProfile() {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      const updatedUser = {
-        ...parsedUser,
-        ...response.data,
-        profilePic: profilePic ?? parsedUser.profilePic,
-      };
+    const updatedUser = {
+      ...parsedUser,
+      ...response.data,
+      profilePic: response.data.profilePic || parsedUser.profilePic,
+    };
 
       await AsyncStorage.setItem(
         "user",
@@ -138,21 +138,15 @@ export default function EditProfile() {
           onPress={pickImage}
         >
           {profilePic ? (
-            <Image
-              source={{
-                uri: profilePic.startsWith("file")
-                  ? profilePic
-                  : `${api.defaults.baseURL}${profilePic}?t=${Date.now()}`,
-              }}
-              style={styles.profileImage}
-            />
-          ) : (
-            <View style={styles.placeholder}>
-              <Text style={{ color: "#888" }}>
-                {t("addPhoto")}
-              </Text>
-            </View>
-          )}
+  <Image
+    source={{ uri: profilePic }}
+    style={styles.profileImage} 
+  />
+) : (
+  <View style={styles.placeholder}>
+    <Text style={{ color: "#888" }}>Add Photo</Text>
+  </View>
+)}
         </TouchableOpacity>
 
         <View style={styles.fieldContainer}>

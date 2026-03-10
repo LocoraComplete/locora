@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { API_BASE_URL } from "../../config/api"; // <--- import the base URL
 import { colors } from "../../config/colors";
 import { useLanguage } from "../../context/languagecontext";
 import { useTheme } from "../../context/themecontext";
@@ -27,58 +28,76 @@ export default function ChangePassword() {
   const [loading, setLoading] = useState(false);
 
   const handleChangePassword = async () => {
-    if (!userId) return Alert.alert(t("error") || "Error", t("userIdMissing") || "User ID missing!");
+    if (!userId)
+      return Alert.alert(
+        t("error") || "Error",
+        t("userIdMissing") || "User ID missing!"
+      );
 
     if (!oldPassword || !newPassword)
-      return Alert.alert(t("error") || "Error", t("fillAllFields") || "Please fill all fields");
+      return Alert.alert(
+        t("error") || "Error",
+        t("fillAllFields") || "Please fill all fields"
+      );
 
     if (oldPassword.length < 6)
-      return Alert.alert(t("invalidPassword") || "Invalid Password", t("oldPasswordMin6") || "Old password must be at least 6 characters");
+      return Alert.alert(
+        t("invalidPassword") || "Invalid Password",
+        t("oldPasswordMin6") || "Old password must be at least 6 characters"
+      );
 
     if (newPassword.length < 6)
-      return Alert.alert(t("invalidPassword") || "Invalid Password", t("newPasswordMin6") || "New password must be at least 6 characters");
+      return Alert.alert(
+        t("invalidPassword") || "Invalid Password",
+        t("newPasswordMin6") || "New password must be at least 6 characters"
+      );
 
     if (oldPassword === newPassword)
-      return Alert.alert(t("invalidPassword") || "Invalid Password", t("passwordsCannotMatch") || "Old and new passwords cannot match");
+      return Alert.alert(
+        t("invalidPassword") || "Invalid Password",
+        t("passwordsCannotMatch") || "Old and new passwords cannot match"
+      );
 
     try {
       setLoading(true);
 
-      const checkResponse = await fetch(
-        `https://locora-backend.onrender.com/api/users/check-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, oldPassword }),
-        }
-      );
+      // Check old password
+      const response = await fetch(`${API_BASE_URL}/api/users/check-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, oldPassword }),
+      });
 
       let checkData: any;
-      const text = await checkResponse.text();
+      const text = await response.text();
 
       try {
         checkData = JSON.parse(text);
       } catch {
         console.log("Check password invalid JSON response:", text);
-        Alert.alert(t("error") || "Error", t("serverInvalidResponse") || "Server returned invalid response");
+        Alert.alert(
+          t("error") || "Error",
+          t("serverInvalidResponse") || "Server returned invalid response"
+        );
         setLoading(false);
         return;
       }
 
       if (!checkData.valid) {
-        Alert.alert(t("error") || "Error", checkData.message || t("oldPasswordIncorrect") || "Old password is incorrect");
+        Alert.alert(
+          t("error") || "Error",
+          checkData.message || t("oldPasswordIncorrect") || "Old password is incorrect"
+        );
         setLoading(false);
         return;
       }
 
-      const updateResponse = await fetch(
-        `https://locora-backend.onrender.com/api/users/update-password`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, oldPassword, newPassword }),
-        }
-      );
+      // Update password
+      const updateResponse = await fetch(`${API_BASE_URL}/api/users/update-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, oldPassword, newPassword }),
+      });
 
       let updateData: any;
 
@@ -87,21 +106,33 @@ export default function ChangePassword() {
       } catch {
         const text = await updateResponse.text();
         console.log("Update password error:", text);
-        Alert.alert(t("error") || "Error", t("serverInvalidResponse") || "Server returned invalid response");
+        Alert.alert(
+          t("error") || "Error",
+          t("serverInvalidResponse") || "Server returned invalid response"
+        );
         setLoading(false);
         return;
       }
 
       if (updateData.success) {
-        Alert.alert(t("success") || "Success", t("passwordChanged") || "Password changed successfully");
+        Alert.alert(
+          t("success") || "Success",
+          t("passwordChanged") || "Password changed successfully"
+        );
         setOldPassword("");
         setNewPassword("");
       } else {
-        Alert.alert(t("error") || "Error", updateData.message || t("somethingWentWrong") || "Something went wrong");
+        Alert.alert(
+          t("error") || "Error",
+          updateData.message || t("somethingWentWrong") || "Something went wrong"
+        );
       }
     } catch (err) {
       console.log("Password change error:", err);
-      Alert.alert(t("error") || "Error", t("somethingWentWrong") || "Something went wrong");
+      Alert.alert(
+        t("error") || "Error",
+        t("somethingWentWrong") || "Something went wrong"
+      );
     } finally {
       setLoading(false);
     }
@@ -131,7 +162,11 @@ export default function ChangePassword() {
           secureTextEntry={!showOldPassword}
         />
         <TouchableOpacity onPress={() => setShowOldPassword(!showOldPassword)}>
-          <Ionicons name={showOldPassword ? "eye-outline" : "eye-off-outline"} size={22} color={themeColors.text} />
+          <Ionicons
+            name={showOldPassword ? "eye-outline" : "eye-off-outline"}
+            size={22}
+            color={themeColors.text}
+          />
         </TouchableOpacity>
       </View>
 
@@ -157,7 +192,11 @@ export default function ChangePassword() {
           secureTextEntry={!showNewPassword}
         />
         <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)}>
-          <Ionicons name={showNewPassword ? "eye-outline" : "eye-off-outline"} size={22} color={themeColors.text} />
+          <Ionicons
+            name={showNewPassword ? "eye-outline" : "eye-off-outline"}
+            size={22}
+            color={themeColors.text}
+          />
         </TouchableOpacity>
       </View>
 

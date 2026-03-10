@@ -1,18 +1,18 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  Alert,
-} from "react-native";
-import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useTheme } from "../../context/themecontext";
+import { useRouter } from "expo-router";
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../config/colors";
 import { useLanguage } from "../../context/languagecontext";
+import { useTheme } from "../../context/themecontext";
 
 export default function Settings() {
   const router = useRouter();
@@ -222,7 +222,7 @@ export default function Settings() {
                 theme === "dark" ? "#2a2a2a" : "#e5e5e5",
             },
           ]}
-          onPress={handleDelete}
+          onPress={() => router.push("/settings/delete")}
         >
           <Text style={[styles.itemText, styles.dangerText]}>
             {t("deleteAccount") || "Delete Account"}

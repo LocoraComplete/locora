@@ -1,19 +1,19 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  Alert,
   Image,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-  Alert,
 } from "react-native";
-import { useTheme } from "../../context/themecontext";
-import { colors } from "../../config/colors";
 import api from "../../config/api";
+import { colors } from "../../config/colors";
 import { useLanguage } from "../../context/languagecontext";
+import { useTheme } from "../../context/themecontext";
 
 export default function ProfileSetupScreen() {
   const router = useRouter();
@@ -23,8 +23,7 @@ export default function ProfileSetupScreen() {
 
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
-  const [primaryEmergency, setPrimaryEmergency] = useState("");
-  const [secondaryEmergency, setSecondaryEmergency] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState("");
 
   useEffect(() => {
     const loadUser = async () => {
@@ -37,22 +36,15 @@ export default function ProfileSetupScreen() {
     loadUser();
   }, []);
 
-  const handlePrimaryChange = (text: string) => {
+  const handleEmergencyChange = (text: string) => {
     const digits = text.replace(/[^0-9]/g, "");
     if (digits.length <= 10) {
-      setPrimaryEmergency(digits);
-    }
-  };
-
-  const handleSecondaryChange = (text: string) => {
-    const digits = text.replace(/[^0-9]/g, "");
-    if (digits.length <= 10) {
-      setSecondaryEmergency(digits);
+      setEmergencyContact(digits);
     }
   };
 
   const handleContinue = async () => {
-    if (!name || !location || primaryEmergency.length !== 10) {
+    if (!name || !location || emergencyContact.length !== 10) {
       Alert.alert(
         t("error") || "Error",
         t("fillProfileFields") || "Please fill all required fields correctly"
@@ -60,11 +52,7 @@ export default function ProfileSetupScreen() {
       return;
     }
 
-    const formattedPrimary = `+91${primaryEmergency}`;
-    const formattedSecondary =
-      secondaryEmergency.length === 10
-        ? `+91${secondaryEmergency}`
-        : undefined;
+    const formattedEmergency = `+91${emergencyContact}`;
 
     const storedUser = await AsyncStorage.getItem("user");
     if (!storedUser) return;
@@ -72,11 +60,8 @@ export default function ProfileSetupScreen() {
     const user = JSON.parse(storedUser);
 
     try {
-      const response = await api.put(`/api/users/${user._id}/emergencyContacts`, {
-        emergencyContacts: {
-          primary: formattedPrimary,
-          secondary: formattedSecondary,
-        },
+      const response = await api.put(`/api/users/${user.UserId}/emergencyContact`, {
+        emergencyContact: formattedEmergency,
         Name: name,
         Location: location,
         profileCompleted: true,
@@ -166,41 +151,10 @@ export default function ProfileSetupScreen() {
           +91
         </Text>
         <TextInput
-          placeholder={t("primaryEmergency") || "Primary Emergency *"}
+          placeholder={t("primaryEmergency") || "Emergency Contact *"}
           placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          value={primaryEmergency}
-          onChangeText={handlePrimaryChange}
-          keyboardType="number-pad"
-          maxLength={10}
-          style={[
-            styles.phoneInput,
-            { color: themeColors.text },
-          ]}
-        />
-      </View>
-
-      <View
-        style={[
-          styles.phoneContainer,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-          },
-        ]}
-      >
-        <Text
-          style={[
-            styles.prefix,
-            { color: themeColors.text },
-          ]}
-        >
-          +91
-        </Text>
-        <TextInput
-          placeholder={t("secondaryEmergency") || "Secondary Emergency"}
-          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          value={secondaryEmergency}
-          onChangeText={handleSecondaryChange}
+          value={emergencyContact}
+          onChangeText={handleEmergencyChange}
           keyboardType="number-pad"
           maxLength={10}
           style={[

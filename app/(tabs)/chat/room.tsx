@@ -18,8 +18,8 @@ import {
 } from "react-native";
 
 import { colors } from "../../../config/colors";
-import { useTheme } from "../../../context/themecontext";
 import { useLanguage } from "../../../context/languagecontext";
+import { useTheme } from "../../../context/themecontext";
 
 export default function Room() {
   const {
@@ -159,15 +159,20 @@ export default function Room() {
           { borderColor: themeColors.border },
         ]}
       >
-        {isPrivate === "true" ? (
-          <Pressable
-            onPress={() => {
-              if (otherUserId) {
-                router.push(`/profile/${otherUserId}`);
-              }
-            }}
-          >
-            <Text
+        <Pressable onPress={() => router.back()} style={{ marginRight: 10 }}>
+          <Text style={{ fontSize: 18 }}>←</Text>
+        </Pressable>
+
+        <View style={{ flex: 1 }}>
+          {isPrivate === "true" ? (
+            <Pressable
+              onPress={() => {
+                if (otherUserId) {
+                  router.push(`/profile/${otherUserId}`);
+                }
+              }}
+            >
+              <Text
               style={[
                 styles.headerTitle,
                 { color: themeColors.text },
@@ -175,7 +180,7 @@ export default function Room() {
             >
               {otherUserHandle}
             </Text>
-            <Text
+              <Text
               style={[
                 styles.headerSubtitle,
                 { color: themeColors.secondaryText },
@@ -183,10 +188,10 @@ export default function Room() {
             >
               {t("tapViewProfile") || "Tap to view profile"}
             </Text>
-          </Pressable>
-        ) : (
-          <TouchableOpacity onPress={openGroupInfo}>
-            <Text
+            </Pressable>
+          ) : (
+            <TouchableOpacity onPress={openGroupInfo}>
+              <Text
               style={[
                 styles.headerTitle,
                 { color: themeColors.text },
@@ -194,7 +199,7 @@ export default function Room() {
             >
               {title}
             </Text>
-            <Text
+              <Text
               style={[
                 styles.headerSubtitle,
                 { color: themeColors.secondaryText },
@@ -202,8 +207,9 @@ export default function Room() {
             >
               {t("tapViewGroupInfo") || "Tap to view group info"}
             </Text>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* MESSAGES */}
@@ -252,18 +258,14 @@ export default function Room() {
             >
               {!isMine && (
                 <Text
-                  style={[
-                    styles.senderName,
-                    { color: themeColors.text },
-                  ]}
+                  style={[styles.senderName, { color: themeColors.text }]}
                 >
                   {msg.SenderName || otherUserHandle || t("user") || "User"}
                 </Text>
               )}
 
-              <Text style={{ color: themeColors.text }}>
-                {msg.Text}
-              </Text>
+
+              <Text style={{ color: themeColors.text }}>{msg.Text}</Text>
             </View>
           );
         })}
@@ -291,19 +293,12 @@ export default function Room() {
           onChangeText={setInputText}
         />
 
+
         <TouchableOpacity
-          style={[
-            styles.sendBtn,
-            { backgroundColor: themeColors.text },
-          ]}
+          style={[styles.sendBtn, { backgroundColor: themeColors.text }]}
           onPress={sendMessage}
         >
-          <Text
-            style={[
-              styles.sendText,
-              { color: themeColors.background },
-            ]}
-          >
+          <Text style={[styles.sendText, { color: themeColors.background }]}>
             {t("send") || "Send"}
           </Text>
         </TouchableOpacity>
@@ -318,24 +313,17 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 
   header: {
+    flexDirection: "row",
+    alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
+    borderColor: "#eee",
   },
 
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
+  headerTitle: { fontSize: 18, fontWeight: "bold" },
+  headerSubtitle: { fontSize: 12, color: "#777", marginTop: 2 },
 
-  headerSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  messages: {
-    flex: 1,
-    paddingHorizontal: 15,
-  },
+  messages: { flex: 1, paddingHorizontal: 15 },
 
   messageReceived: {
     alignSelf: "flex-start",
@@ -344,6 +332,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
+
 
   messageSent: {
     alignSelf: "flex-end",
@@ -367,9 +356,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
 
-  systemText: {
-    fontSize: 12,
-  },
+  systemText: { fontSize: 12, color: "#666" },
 
   inputRow: {
     flexDirection: "row",

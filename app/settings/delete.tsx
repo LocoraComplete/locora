@@ -4,15 +4,17 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import api from "../../config/api";
 import { colors } from "../../config/colors";
-import { useTheme } from "../../context/themecontext";
 import { useLanguage } from "../../context/languagecontext";
+import { useTheme } from "../../context/themecontext";
 
 export default function DeleteAccount() {
   const router = useRouter();
@@ -22,99 +24,99 @@ export default function DeleteAccount() {
 
   const [loading, setLoading] = useState(false);
 
-  // ✅ Get user from AsyncStorage
-  const getUser = async () => {
-    try {
-      const stored = await AsyncStorage.getItem("user");
-      const parsed = stored ? JSON.parse(stored) : null;
-      console.log("AsyncStorage user:", parsed);
-      return parsed;
-    } catch (err) {
-      console.log("Error reading AsyncStorage user:", err);
-      return null;
-    }
-  };
-
-  // ✅ Delete account function
   const handleDeleteAccount = async () => {
-    const user = await getUser();
+    console.log("DELETE BUTTON PRESSED");
 
-    if (!user || !user.UserId) {
+    try {
+      const storedUser = await AsyncStorage.getItem("user");
+      console.log("Stored user:", storedUser);
+
+      if (!storedUser) {
+        Alert.alert(
+          t("error") || "Error",
+          t("userNotFound") || "User or UserId not found"
+        );
+        return;
+      }
+
+      const user = JSON.parse(storedUser);
+
+      if (!user?.UserId) {
+        Alert.alert("Error", "Invalid user data");
+        return;
+      }
+
       Alert.alert(
-        t("error") || "Error",
-        `${t("userNotFound") || "User or UserId not found"}`
-      );
-      return;
-    }
+        t("deleteAccount") || "Delete Account",
+        t("confirmDeleteAccount") ||
+          "Are you sure you want to permanently delete your account?",
+        [
+          { text: t("cancel") || "Cancel", style: "cancel" },
+          {
+            text: t("delete") || "Delete",
+            style: "destructive",
+            onPress: async () => {
+              setLoading(true);
 
-    console.log("Attempting to delete account for UserId:", user.UserId);
+              try {
+                const res = await api.delete(`/api/users/delete/${user.UserId}`);
+                console.log("Delete response:", res.data);
 
-    Alert.alert(
-      t("deleteAccount") || "Delete Account",
-      t("confirmDeleteAccount") ||
-        "Are you sure you want to permanently delete your account?",
-      [
-        { text: t("cancel") || "Cancel", style: "cancel" },
-        {
-          text: t("delete") || "Delete",
-          style: "destructive",
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const res = await api.delete(`/api/users/delete/${user.UserId}`);
-              console.log("DELETE RESPONSE FULL:", res);
+                if (res.status === 200) {
+                  console.log("Account deleted successfully.");
 
-              if (res.status === 200) {
-                console.log("Account deleted successfully.");
-                await AsyncStorage.removeItem("user");
+                  await AsyncStorage.removeItem("user");
 
-                Alert.alert(
-                  t("success") || "Success",
-                  t("accountDeleted") || "Your account has been deleted"
-                );
+                  Alert.alert(
+                    t("success") || "Success",
+                    t("accountDeleted") || "Your account has been deleted"
+                  );
 
-                router.replace("/(auth)/login");
-              } else {
-                console.log("Delete returned non-200 status:", res.status);
+                  router.replace("/(auth)/login");
+                } else {
+                  Alert.alert(
+                    t("error") || "Error",
+                    t("deleteFailed") || "Failed to delete account"
+                  );
+                }
+              } catch (err: any) {
+                console.log("DELETE ERROR FULL:", err);
 
                 Alert.alert(
                   t("error") || "Error",
-                  t("deleteFailed") || "Failed to delete account"
+                  err?.response?.data?.message ||
+                    err.message ||
+                    (t("deleteFailed") || "Failed to delete account")
                 );
+              } finally {
+                setLoading(false);
               }
-            } catch (err: any) {
-              console.log("DELETE ERROR FULL:", err);
-
-              Alert.alert(
-                t("error") || "Error",
-                err?.response?.data?.message ||
-                  err.message ||
-                  (t("deleteFailed") || "Failed to delete account")
-              );
-            } finally {
-              setLoading(false);
-            }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    } catch (error) {
+      console.log("Delete setup error:", error);
+    }
   };
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: themeColors.background }]}
     >
-      {loading ? (
-        <ActivityIndicator size="large" color={themeColors.text} />
-      ) : (
-        <>
-          {/* ✅ Main Delete Button */}
+      <View style={styles.content}>
+        <Text style={[styles.warningText, { color: themeColors.text }]}>
+          Deleting your account is permanent and cannot be undone.
+        </Text>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={themeColors.text} />
+        ) : (
           <TouchableOpacity
+            activeOpacity={0.7}
             style={[
               styles.deleteButton,
-              {
-                backgroundColor: theme === "dark" ? "#ff4d4f" : "#C70000",
-              },
+              { backgroundColor: theme === "dark" ? "#ff4d4f" : "#C70000" },
             ]}
             onPress={handleDeleteAccount}
           >
@@ -122,48 +124,8 @@ export default function DeleteAccount() {
               {t("deleteMyAccount") || "Delete My Account"}
             </Text>
           </TouchableOpacity>
-
-          {/* 🔹 Hardcoded Test Button */}
-          <TouchableOpacity
-            style={[
-              styles.deleteButton,
-              {
-                backgroundColor: theme === "dark" ? "#555" : "#999",
-                marginTop: 20,
-              },
-            ]}
-            onPress={async () => {
-              setLoading(true);
-              try {
-                const testId = "U003";
-                console.log("Hardcoded DELETE test for UserId:", testId);
-
-                const res = await api.delete(`/api/users/delete/${testId}`);
-
-                console.log("HARDCODE DELETE RESPONSE:", res.data);
-
-                Alert.alert(
-                  t("testResponse") || "Test Response",
-                  JSON.stringify(res.data)
-                );
-              } catch (e) {
-                console.log("HARDCODE DELETE ERROR:", e);
-
-                Alert.alert(
-                  t("error") || "Error",
-                  t("deleteFailed") || "Failed to delete account"
-                );
-              } finally {
-                setLoading(false);
-              }
-            }}
-          >
-            <Text style={styles.deleteText}>
-              {t("testDeleteButton") || "Test Delete Hardcoded"}
-            </Text>
-          </TouchableOpacity>
-        </>
-      )}
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -171,19 +133,29 @@ export default function DeleteAccount() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  content: {
+    flex: 1,
     justifyContent: "center",
-    alignItems: "center",
     padding: 20,
   },
+
+  warningText: {
+    textAlign: "center",
+    marginBottom: 30,
+    fontSize: 15,
+  },
+
   deleteButton: {
-    padding: 16,
+    paddingVertical: 16,
     borderRadius: 10,
     alignItems: "center",
-    width: "100%",
   },
+
   deleteText: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "700",
     fontSize: 16,
   },
 });

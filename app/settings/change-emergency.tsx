@@ -1,16 +1,18 @@
+import { API_BASE_URL } from "@/config/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useState } from "react";
 import {
-  View,
+  Alert,
+  Keyboard,
+  StyleSheet,
   Text,
   TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
+  TouchableOpacity
 } from "react-native";
-import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../context/themecontext";
-import { useLanguage } from "../../context/languagecontext";
 import { colors } from "../../config/colors";
+import { useLanguage } from "../../context/languagecontext";
+import { useTheme } from "../../context/themecontext";
 
 export default function ChangeEmergency() {
   const { theme } = useTheme();
@@ -18,8 +20,9 @@ export default function ChangeEmergency() {
   const themeColors = colors[theme];
 
   const [emergencyNumber, setEmergencyNumber] = useState("+91");
+  const [loading, setLoading] = useState(false);
 
-  const handleChangeEmergency = () => {
+  const handleChangeEmergency = async () => {
     const numberWithoutCode = emergencyNumber.replace("+91", "");
 
     if (numberWithoutCode.length !== 10) {
@@ -39,11 +42,51 @@ export default function ChangeEmergency() {
       return;
     }
 
-    Alert.alert(
-      t("success") || "Success",
-      t("emergencyUpdated") ||
-        "Emergency contact updated successfully!"
-    );
+    try {
+      setLoading(true);
+
+      const storedUser = await AsyncStorage.getItem("user");
+
+      if (!storedUser) {
+        Alert.alert("Error", "User not logged in");
+        return;
+      }
+
+      const parsedUser = JSON.parse(storedUser);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/users/${parsedUser.UserId}/update-emergency`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            emergencyContact: emergencyNumber,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        Keyboard.dismiss();
+
+        Alert.alert(
+          t("success") || "Success",
+          t("emergencyUpdated") ||
+            "Emergency contact updated successfully!"
+        );
+        setEmergencyNumber("+91");
+      } else {
+        Alert.alert("Error", data.message || "Update failed");
+      }
+    } catch (error) {
+      console.log("Emergency update error:", error);
+      Alert.alert("Error", "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (text: string) => {
@@ -51,7 +94,11 @@ export default function ChangeEmergency() {
       text = "+91";
     }
 
-    setEmergencyNumber(text);
+    const digits = text.replace("+91", "").replace(/\D/g, "");
+
+    if (digits.length > 10) return;
+
+    setEmergencyNumber("+91" + digits);
   };
 
   return (
@@ -95,9 +142,11 @@ export default function ChangeEmergency() {
           {
             backgroundColor:
               theme === "dark" ? "#fff" : "#000",
+            opacity: loading ? 0.7 : 1,
           },
         ]}
         onPress={handleChangeEmergency}
+        disabled={loading}
       >
         <Text
           style={[

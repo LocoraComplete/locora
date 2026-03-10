@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -9,11 +10,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import api from "../../config/api";
-import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
 import { useLanguage } from "../../context/languagecontext";
+import { useTheme } from "../../context/themecontext";
 
 export default function Signup() {
   const router = useRouter();
@@ -28,7 +28,6 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [primaryContact, setPrimaryContact] = useState("");
-  const [secondaryContact, setSecondaryContact] = useState("");
   const [secure1, setSecure1] = useState(true);
   const [secure2, setSecure2] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -43,78 +42,43 @@ export default function Signup() {
 
   const handleSignup = async () => {
     const trimmedEmail = email.trim();
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const fullName = trimmedLastName ? `${trimmedFirstName} ${trimmedLastName}` : trimmedFirstName;
 
-    if (!firstName.trim())
-      return Alert.alert(
-        t("error") || "Error",
-        t("firstNameRequired") || "First name is required"
-      );
-
+    if (!trimmedFirstName)
+      return Alert.alert(t("error") || "Error", t("firstNameRequired") || "First name is required");
     if (!validateEmail(trimmedEmail))
-      return Alert.alert(
-        t("error") || "Error",
-        t("invalidEmail") || "Invalid email format"
-      );
-
+      return Alert.alert(t("error") || "Error", t("invalidEmail") || "Invalid email format");
     if (phone.length !== 10)
-      return Alert.alert(
-        t("error") || "Error",
-        t("phone10Digits") || "Phone number must be exactly 10 digits"
-      );
-
+      return Alert.alert(t("error") || "Error", t("phone10Digits") || "Phone number must be exactly 10 digits");
     if (primaryContact.length !== 10)
-      return Alert.alert(
-        t("error") || "Error",
-        t("primaryContact10") || "Primary contact must be 10 digits"
-      );
-
-    if (secondaryContact && secondaryContact.length !== 10)
-      return Alert.alert(
-        t("error") || "Error",
-        t("secondaryContact10") || "Secondary contact must be 10 digits"
-      );
-
+      return Alert.alert(t("error") || "Error", t("primaryContact10") || "Primary contact must be 10 digits");
     if (password.length < 6)
-      return Alert.alert(
-        t("error") || "Error",
-        t("passwordMin6") || "Password must be at least 6 characters"
-      );
-
+      return Alert.alert(t("error") || "Error", t("passwordMin6") || "Password must be at least 6 characters");
     if (password !== confirmPassword)
-      return Alert.alert(
-        t("error") || "Error",
-        t("passwordsDoNotMatch") || "Passwords do not match"
-      );
+      return Alert.alert(t("error") || "Error", t("passwordsDoNotMatch") || "Passwords do not match");
 
     const payload = {
-      Name: lastName ? `${firstName} ${lastName}` : firstName,
+      Name: fullName,
       Email: trimmedEmail,
       Password: password,
-      Phone: "+91" + phone,
+      Phone: phone, 
       Gender: "Other",
-      emergencyContacts: {
-        primary: primaryContact,
-        secondary: secondaryContact ? secondaryContact : "",
-      },
-      profileCompleted: false,
+      emergencyContact: primaryContact, 
     };
 
     try {
       setLoading(true);
       await api.post("/api/users/register", payload);
 
-      Alert.alert(
-        t("success") || "Success",
-        t("accountCreated") || "Account created!"
-      );
-
+      Alert.alert(t("success") || "Success", t("accountCreated") || "Account created!");
       router.replace("/(auth)/login");
     } catch (error: any) {
+      console.log("SIGNUP ERROR:", error?.response?.data || error.message);
       Alert.alert(
         t("signupFailed") || "Signup Failed",
-        error?.response?.data?.message ||
-          t("serverError") ||
-          "Server error"
+        error?.response?.data?.message || t("serverError") || "Server error"
       );
     } finally {
       setLoading(false);
@@ -123,10 +87,7 @@ export default function Signup() {
 
   return (
     <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: themeColors.background },
-      ]}
+      contentContainerStyle={[styles.container, { backgroundColor: themeColors.background }]}
     >
       <Text style={[styles.title, { color: themeColors.text }]}>
         {t("createAccount") || "Create Account"}
@@ -179,18 +140,6 @@ export default function Signup() {
           keyboardType="number-pad"
           value={primaryContact}
           onChangeText={(text) => handlePhoneChange(text, setPrimaryContact)}
-        />
-      </View>
-
-      <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
-        <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
-        <TextInput
-          style={[styles.phoneInput, { color: themeColors.text }]}
-          placeholder={t("secondaryEmergencyContact") || "Secondary Emergency Contact"}
-          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          keyboardType="number-pad"
-          value={secondaryContact}
-          onChangeText={(text) => handlePhoneChange(text, setSecondaryContact)}
         />
       </View>
 
