@@ -3,12 +3,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import { useCallback, useState } from "react";
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../config/api";
 import { colors } from "../../config/colors";
 import { useLanguage } from "../../context/languagecontext";
 import { useTheme } from "../../context/themecontext";
+
+const screenWidth = Dimensions.get("window").width;
+const postSize = screenWidth / 3;
 
 type User = {
   UserId: string;
@@ -30,35 +33,40 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<{ PostId: string; ImageUrl: string }[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      let isActive = true;
+useFocusEffect(
+  useCallback(() => {
+    let isActive = true;
 
-      const loadData = async () => {
-        try {
-          const storedUser = await AsyncStorage.getItem("user");
+    const loadData = async () => {
+      setLoading(true);
 
-          if (storedUser && isActive) {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
+      try {
+        const storedUser = await AsyncStorage.getItem("user");
 
-            const res = await api.get(`/api/posts/user/${parsedUser.UserId}`);
+        if (storedUser && isActive) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+
+          const res = await api.get(`/api/posts/user/${parsedUser.UserId}`);
+
+          if (isActive) {
             setPosts(res.data);
           }
-        } catch (error) {
-          console.log("Error loading profile:", error);
-        } finally {
-          if (isActive) setLoading(false);
         }
-      };
+      } catch (error) {
+        console.log("Error loading profile:", error);
+      } finally {
+        if (isActive) setLoading(false);
+      }
+    };
 
-      loadData();
+    loadData();
 
-      return () => {
-        isActive = false;
-      };
-    }, [])
-  );
+    return () => {
+      isActive = false;
+    };
+  }, [])
+);
 
   if (loading)
     return (
@@ -73,10 +81,9 @@ export default function Profile() {
         data={posts}
         keyExtractor={(item) => item.PostId}
         numColumns={3}
-        columnWrapperStyle={{ justifyContent: "space-between", marginBottom: 8 }}
         contentContainerStyle={{ paddingBottom: 40 }}
         ListHeaderComponent={
-          <>
+          <View style={styles.headerContainer}>
             {/* HEADER */}
             <View style={styles.header}>
               <Text style={[styles.username, { color: themeColors.text }]}>
@@ -172,10 +179,26 @@ export default function Profile() {
                 </Text>
               </View>
             )}
-          </>
+          </View>
         }
         renderItem={({ item }) => (
-          <Image source={{ uri: item.ImageUrl }} style={styles.postImage} />
+          <TouchableOpacity
+            style={{ width: postSize, height: postSize }}
+            onPress={() =>
+              router.push({
+                pathname: "/post-detail",
+                params: {
+                  PostId: item.PostId,
+                  ImageUrl: item.ImageUrl,
+                },
+              })
+            }
+          >
+            <Image
+              source={{ uri: item.ImageUrl }}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </TouchableOpacity>
         )}
       />
     </SafeAreaView>
@@ -183,7 +206,7 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 16 },
+  container: { flex: 1 },
 
   header: {
     flexDirection: "row",
@@ -246,6 +269,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 15,
+    marginBottom: 20,
   },
 
   outlineButton: {
@@ -264,8 +288,16 @@ const styles = StyleSheet.create({
   noPostsText: {},
 
   postImage: {
-    width: "32%",
-    aspectRatio: 1,
-    borderRadius: 8,
+    width: "100%",
+    height: "100%",
   },
+
+  postWrapper: {
+    flex: 1,
+    aspectRatio: 1,
+  },
+
+  headerContainer: {
+  paddingHorizontal: 16,
+},
 });

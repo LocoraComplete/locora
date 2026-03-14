@@ -1,4 +1,6 @@
-import { useRouter, Stack } from "expo-router";
+import axios from "axios";
+import { Stack, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -9,55 +11,55 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../../context/themecontext";
+import { API_BASE_URL } from "../../../config/api";
 import { colors } from "../../../config/colors";
-import { useState } from "react";
 import { useLanguage } from "../../../context/languagecontext";
+import { useTheme } from "../../../context/themecontext";
 
-const guides = [
-  {
-    id: "g1",
-    name: "Rohan Singh",
-    languages: ["Hindi", "English"],
-    location: "Udaipur",
-    experience: "5+",
-    rating: 4.9,
-    phone: "9876543210",
-    email: "rohan@guide.com",
-    photo: require("../../../assets/images/guide1.jpg"),
-  },
-  {
-    id: "g2",
-    name: "Meera Vyas",
-    languages: ["Hindi", "Marwari", "English"],
-    location: "Jodhpur",
-    experience: "8+",
-    rating: 5.0,
-    phone: "9823456781",
-    email: "meera@guide.com",
-    photo: require("../../../assets/images/guide2.jpg"),
-  },
-  {
-    id: "g3",
-    name: "Vikram Shekhawat",
-    languages: ["Hindi", "English", "French"],
-    location: "Jaipur",
-    experience: "12+",
-    rating: 4.8,
-    phone: "9811122233",
-    email: "vikram@guide.com",
-    photo: require("../../../assets/images/guide1.jpg"),
-  },
-];
+type GuideLanguage = "hindi" | "english" | "marwari" | "french";
+
+type Guide = {
+  id: string;
+  name: string;
+  languages: string[];
+  location: string;
+  experience: string;
+  rating: number;
+  phone: string;
+  email: string;
+  photo: string;
+};
 
 export default function Guide() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [guides, setGuides] = useState<Guide[]>([]);
+
+  // FETCH GUIDES FROM BACKEND
+
+  useEffect(() => {
+    const fetchGuides = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/guide/all`, {
+          params: {
+            lang: language,
+            t: Date.now(),
+          },
+        });
+
+        setGuides(res.data);
+      } catch (err) {
+        console.log("Guide fetch error:", err);
+      }
+    };
+
+    fetchGuides();
+  }, [language]);
 
   const filteredGuides = guides.filter((guide) => {
     const query = searchQuery.toLowerCase();
@@ -130,7 +132,7 @@ export default function Guide() {
               }
             >
               <View>
-                <Image source={guide.photo} style={styles.image} />
+                <Image source={{ uri: guide.photo }} style={styles.image} />
                 <View style={styles.ratingTag}>
                   <Text style={styles.ratingText}>⭐ {guide.rating}</Text>
                 </View>
@@ -166,7 +168,7 @@ export default function Guide() {
                       { color: themeColors.tertiaryText },
                     ]}
                   >
-                    {guide.location}, Rajasthan
+                    {guide.location}, {t("rajasthan")}
                   </Text>
 
                   <Text

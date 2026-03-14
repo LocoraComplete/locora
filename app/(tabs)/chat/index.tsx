@@ -17,15 +17,19 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
 import { useLanguage } from "../../../context/languagecontext";
+import { useTheme } from "../../../context/themecontext";
 
 interface Chat {
   ChatId: string;
   GroupName?: string;
   Members?: any[];
   Description?: string;
+  ChatType?: string;
+  Users?: any[];
+  LastMessage?: string;
+  LastMessageTime?: string;
 }
 
 export default function ChatList() {
@@ -132,19 +136,45 @@ export default function ChatList() {
   };
 
   const openChat = (chat: Chat) => {
-    if (!chat.ChatId || !chat.GroupName) return;
+    if (!chat.ChatId) return;
+
+    if (chat.ChatType === "private") {
+      const otherUser = chat.Users?.find((u) => u.UserId !== currentUserId);
+
+      if (!otherUser) return;
+
+      router.push({
+        pathname: "/chat/room",
+        params: {
+          chatId: chat.ChatId,
+          title: otherUser.Handle || "User",
+          isPrivate: "true",
+          otherUserId: otherUser.UserId,
+          otherUserHandle: otherUser.Handle,
+        },
+      });
+
+      return;
+    }
 
     router.push({
       pathname: "/chat/room",
-      params: { chatId: chat.ChatId, title: chat.GroupName },
+      params: {
+        chatId: chat.ChatId,
+        title: chat.GroupName,
+        isPrivate: "false",
+      },
     });
   };
 
-  const filteredGroups = myGroups.filter(
-    (chat) =>
-      chat.GroupName &&
-      chat.GroupName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredGroups = myGroups.filter((chat) => {
+    const name =
+      chat.ChatType === "private"
+        ? chat.Users?.find((u) => u.UserId !== currentUserId)?.Handle
+        : chat.GroupName;
+
+    return name?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <>
@@ -173,11 +203,7 @@ export default function ChatList() {
             },
           ]}
         >
-          <Ionicons
-            name="search-outline"
-            size={16}
-            color={themeColors.secondaryText}
-          />
+          <Ionicons name="search-outline" size={16} color={themeColors.secondaryText} />
 
           <TextInput
             placeholder={t("searchChats") || "Search chats or groups..."}
@@ -199,7 +225,10 @@ export default function ChatList() {
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {recommended.map((group) => (
-                  <View key={group.ChatId} style={[styles.groupCard, { backgroundColor: themeColors.card }]}>
+                  <View
+                    key={group.ChatId}
+                    style={[styles.groupCard, { backgroundColor: themeColors.card }]}
+                  >
                     <Image
                       source={{
                         uri: `https://api.dicebear.com/7.x/initials/png?seed=${group.GroupName}`,
@@ -232,46 +261,69 @@ export default function ChatList() {
             {loading && <ActivityIndicator size="large" color={accent} />}
 
             {!loading && filteredGroups.length === 0 && (
-              <Text style={{ textAlign: "center", color: themeColors.secondaryText, marginTop: 30 }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  color: themeColors.secondaryText,
+                  marginTop: 30,
+                }}
+              >
                 {t("noResults") || "No results found"}
               </Text>
             )}
 
-            {filteredGroups.map((chat) => (
-              <Pressable
-                key={chat.ChatId}
-                style={[styles.chatCard, { borderColor: themeColors.border }]}
-                onPress={() => openChat(chat)}
-              >
-                <Image
-                  source={{
-                    uri: `https://api.dicebear.com/7.x/initials/png?seed=${chat.GroupName}`,
-                  }}
-                  style={styles.avatar}
-                />
+            {filteredGroups.map((chat) => {
+              const name =
+                chat.ChatType === "private"
+                  ? chat.Users?.find((u) => u.UserId !== currentUserId)?.Handle || "User"
+                  : chat.GroupName;
 
-                <View style={{ flex: 1 }}>
-                  <View style={styles.chatTopRow}>
-                    <Text style={[styles.chatName, { color: themeColors.text }]}>
-                      {chat.GroupName}
-                    </Text>
+              return (
+                <Pressable
+                  key={chat.ChatId}
+                  style={[styles.chatCard, { borderColor: themeColors.border }]}
+                  onPress={() => openChat(chat)}
+                >
+                  <Image
+                    source={{
+                      uri: `https://api.dicebear.com/7.x/initials/png?seed=${name}`,
+                    }}
+                    style={styles.avatar}
+                  />
 
-                    <Text style={[styles.chatTime, { color: themeColors.secondaryText }]}>
-                      {t("now") || "Now"}
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.chatTopRow}>
+                      <Text style={[styles.chatName, { color: themeColors.text }]}>
+                        {name}
+                      </Text>
+
+                      <Text style={[styles.chatTime, { color: themeColors.secondaryText }]}>
+                        {chat.LastMessageTime
+                          ? new Date(chat.LastMessageTime).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : ""}
+                      </Text>
+                    </View>
+
+                    <Text
+                      numberOfLines={1}
+                      style={[styles.chatMsg, { color: themeColors.secondaryText }]}
+                    >
+                      {chat.LastMessage || "No messages yet"}
                     </Text>
                   </View>
-
-                  <Text style={[styles.chatMsg, { color: themeColors.secondaryText }]}>
-                    {t("tapOpenChat") || "Tap to open chat"}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
+                </Pressable>
+              );
+            })}
           </View>
         </ScrollView>
 
         <Modal visible={modalVisible} animationType="slide">
-          <SafeAreaView style={[styles.modalContainer, { backgroundColor: themeColors.background }]}>
+          <SafeAreaView
+            style={[styles.modalContainer, { backgroundColor: themeColors.background }]}
+          >
             <Text style={[styles.modalTitle, { color: themeColors.text }]}>
               {t("createGroup") || "Create Group"}
             </Text>
@@ -279,7 +331,14 @@ export default function ChatList() {
             <TextInput
               placeholder={t("groupName") || "Group Name"}
               placeholderTextColor={themeColors.secondaryText}
-              style={[styles.input, { borderColor: themeColors.border, color: themeColors.text, backgroundColor: themeColors.card }]}
+              style={[
+                styles.input,
+                {
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                  backgroundColor: themeColors.card,
+                },
+              ]}
               value={groupName}
               onChangeText={setGroupName}
             />
@@ -287,19 +346,36 @@ export default function ChatList() {
             <TextInput
               placeholder={t("description") || "Description"}
               placeholderTextColor={themeColors.secondaryText}
-              style={[styles.input, { borderColor: themeColors.border, color: themeColors.text, backgroundColor: themeColors.card }]}
+              style={[
+                styles.input,
+                {
+                  borderColor: themeColors.border,
+                  color: themeColors.text,
+                  backgroundColor: themeColors.card,
+                },
+              ]}
               value={description}
               onChangeText={setDescription}
             />
 
-            <Pressable style={[styles.createBtn, { backgroundColor: accent }]} onPress={createGroup}>
+            <Pressable
+              style={[styles.createBtn, { backgroundColor: accent }]}
+              onPress={createGroup}
+            >
               <Text style={{ color: "#fff", fontWeight: "bold" }}>
                 {t("create") || "Create"}
               </Text>
             </Pressable>
 
             <Pressable onPress={() => setModalVisible(false)}>
-              <Text style={{ textAlign: "center", marginTop: 20, color: accent, fontWeight: "600" }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginTop: 20,
+                  color: accent,
+                  fontWeight: "600",
+                }}
+              >
                 {t("cancel") || "Cancel"}
               </Text>
             </Pressable>

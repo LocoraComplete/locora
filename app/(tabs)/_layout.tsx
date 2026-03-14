@@ -144,7 +144,12 @@ export default function TabLayout() {
 
       const net = await NetInfo.fetch();
       if (net.isConnected) {
-        await api.post("/api/sos/raise-alert", alertData);
+        try {
+          const res = await api.post("/api/sos/raise-alert", alertData);
+          console.log("SOS saved:", res.data);
+        } catch (err:any) {
+          console.log("SOS API ERROR:", err.response?.data || err.message);
+        }
       } else {
         const existingAlerts = await AsyncStorage.getItem("offlineSOS");
         let alerts = existingAlerts ? JSON.parse(existingAlerts) : [];
@@ -212,7 +217,7 @@ export default function TabLayout() {
       {sosActive && (
         <View style={[styles.overlay, { backgroundColor: "rgba(0,0,0,0.85)" }]}>
           <Text style={styles.countdownText}>
-            {t("sendingSOS") || "Sending SOS in"} {countdown}...
+           {`${t("sendingSOS") || "Sending SOS in"} ${countdown}...`}
           </Text>
           <TouchableOpacity style={styles.cancelButton} onPress={cancelSOS}>
             <Text style={styles.cancelText}>{t("cancel") || "Cancel"}</Text>

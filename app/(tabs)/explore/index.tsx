@@ -14,15 +14,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE_URL } from "../../../config/api";
 import { colors } from "../../../config/colors";
-import { useTheme } from "../../../context/themecontext";
 import { useLanguage } from "../../../context/languagecontext";
+import { useTheme } from "../../../context/themecontext";
 
 export default function ExploreScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
 
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] =
@@ -47,9 +47,9 @@ export default function ExploreScreen() {
         setError("");
 
         const [placesRes, eventsRes, foodRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/places`, { timeout: 8000 }),
-          axios.get(`${API_BASE_URL}/api/events`, { timeout: 8000 }),
-          axios.get(`${API_BASE_URL}/api/food`, { timeout: 8000 }),
+          axios.get(`${API_BASE_URL}/api/places?lang=${language}`, { timeout: 8000 }),
+          axios.get(`${API_BASE_URL}/api/events?lang=${language}`, { timeout: 8000 }),
+          axios.get(`${API_BASE_URL}/api/food?lang=${language}`, { timeout: 8000 }),
         ]);
 
         const p = Array.isArray(placesRes.data) ? placesRes.data : [];
@@ -71,7 +71,7 @@ export default function ExploreScreen() {
     };
 
     fetchData();
-  }, []);
+  }, [language]);
 
   const fuzzyMatch = (text: string, query: string) => {
     return text.toLowerCase().includes(query.toLowerCase());
@@ -86,26 +86,25 @@ export default function ExploreScreen() {
       return;
     }
 
-    const p = places.filter((item) =>
-      fuzzyMatch(item.Name || "", query) ||
-      fuzzyMatch(item.Location || "", query)
+    const p = places.filter(
+      (item) =>
+        fuzzyMatch(item.Name || "", query) ||
+        fuzzyMatch(item.Location || "", query)
     );
 
-    const e = events.filter((item) =>
-      fuzzyMatch(item.Name || "", query) ||
-      fuzzyMatch(item.Description || "", query)
+    const e = events.filter(
+      (item) =>
+        fuzzyMatch(item.Name || "", query) ||
+        fuzzyMatch(item.Description || "", query)
     );
 
-    const f = food.filter((item) =>
-      fuzzyMatch(item.Name || "", query) ||
-      fuzzyMatch(item.Description || "", query)
+    const f = food.filter(
+      (item) =>
+        fuzzyMatch(item.Name || "", query) ||
+        fuzzyMatch(item.Description || "", query)
     );
 
-    if (p.length === 0 && e.length === 0 && f.length === 0) {
-      setNotFound(true);
-    } else {
-      setNotFound(false);
-    }
+    setNotFound(p.length === 0 && e.length === 0 && f.length === 0);
 
     setFilteredPlaces(p);
     setFilteredEvents(e);
@@ -135,11 +134,8 @@ export default function ExploreScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: themeColors.background }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <ScrollView style={styles.container}>
-        {/* Search bar */}
         <TextInput
           placeholder={t("searchLocations") || "Search locations..."}
           placeholderTextColor={theme === "dark" ? "#999" : "#777"}
@@ -155,7 +151,6 @@ export default function ExploreScreen() {
           onChangeText={setSearchText}
         />
 
-        {/* Category selector */}
         <View style={styles.categoryContainer}>
           {["places", "events", "food"].map((cat) => (
             <TouchableOpacity
@@ -188,23 +183,13 @@ export default function ExploreScreen() {
           ))}
         </View>
 
-        <Text
-          style={[
-            styles.sectionTitle,
-            { color: themeColors.text },
-          ]}
-        >
-          {t("recommended") || "Recommended"} {getCategoryLabel(selectedCategory)}
+        <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+          {t("recommended") || "Recommended"}{" "}
+          {getCategoryLabel(selectedCategory)}
         </Text>
 
         {notFound && (
-          <Text
-            style={{
-              textAlign: "center",
-              marginBottom: 12,
-              color: themeColors.text,
-            }}
-          >
+          <Text style={{ textAlign: "center", marginBottom: 12, color: themeColors.text }}>
             {t("noResults") || "No Results Found"}
           </Text>
         )}
@@ -218,19 +203,13 @@ export default function ExploreScreen() {
         )}
 
         {!loading && error ? (
-          <Text
-            style={{
-              color: "red",
-              textAlign: "center",
-              marginVertical: 20,
-            }}
-          >
+          <Text style={{ color: "red", textAlign: "center", marginVertical: 20 }}>
             {error}
           </Text>
         ) : (
-          getCategoryData().map((item) => (
+          getCategoryData().map((item, index) => (
             <TouchableOpacity
-              key={item._id || item.id}
+              key={item._id ? item._id : `item-${index}`}
               style={[
                 styles.postCard,
                 {
@@ -260,21 +239,11 @@ export default function ExploreScreen() {
               />
 
               <View style={styles.postContent}>
-                <Text
-                  style={[
-                    styles.postTitle,
-                    { color: themeColors.text },
-                  ]}
-                >
+                <Text style={[styles.postTitle, { color: themeColors.text }]}>
                   {item.Name}
                 </Text>
 
-                <Text
-                  style={[
-                    styles.postDescription,
-                    { color: themeColors.text },
-                  ]}
-                >
+                <Text style={[styles.postDescription, { color: themeColors.text }]}>
                   {item.Description}
                 </Text>
               </View>
@@ -287,10 +256,8 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
+  container: { flex: 1, padding: 16 },
+
   searchBar: {
     borderWidth: 1,
     borderRadius: 12,
@@ -298,11 +265,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 18,
   },
+
   categoryContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
   },
+
   categoryBox: {
     flex: 1,
     padding: 14,
@@ -310,30 +279,23 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
   },
-  categoryText: {
-    fontSize: 14,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    marginBottom: 12,
-  },
+
+  categoryText: { fontSize: 14 },
+
+  sectionTitle: { fontSize: 18, marginBottom: 12 },
+
   postCard: {
     marginBottom: 18,
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
   },
-  postImage: {
-    height: 160,
-    width: "100%",
-  },
-  postContent: {
-    padding: 12,
-  },
-  postTitle: {
-    fontSize: 16,
-  },
-  postDescription: {
-    marginTop: 4,
-  },
+
+  postImage: { height: 160, width: "100%" },
+
+  postContent: { padding: 12 },
+
+  postTitle: { fontSize: 16 },
+
+  postDescription: { marginTop: 4 },
 });

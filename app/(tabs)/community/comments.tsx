@@ -70,6 +70,7 @@ export default function Comments() {
 
       const newComment = {
         UserId: userId,
+        handle: username,
         username: username,
         profilePic: "",
         text: text,
@@ -122,14 +123,14 @@ export default function Comments() {
           onPress={() => openProfile(item.UserId)}
         >
           <Text style={styles.username}>
-            {item.username || "user"}
+            {item.handle || item.Handle || item.username || "user"}
           </Text>
         </TouchableOpacity>
 
         <Text style={styles.text}>{item.text}</Text>
 
         <Text style={styles.time}>
-          {t("comments") || "{formatTime(item.createdAt)}"}
+          {item.createdAt ? formatTime(item.createdAt) : ""}
         </Text>
 
       </View>
