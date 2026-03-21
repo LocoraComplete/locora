@@ -1,6 +1,9 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import * as Location from "expo-location";
+import { useLocalSearchParams } from "expo-router";
 import {
+  Alert,
   Image,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,13 +11,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 import { colors } from "../../../config/colors";
-import { useTheme } from "../../../context/themecontext";
 import { useLanguage } from "../../../context/languagecontext";
+import { useTheme } from "../../../context/themecontext";
 
 export default function PostDetails() {
-  const { id, name, description, image } = useLocalSearchParams();
-  const router = useRouter();
+  const { name, description, image } = useLocalSearchParams();
 
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
@@ -26,10 +29,36 @@ export default function PostDetails() {
       ? { uri: image }
       : require("@/assets/images/amber-fort.jpg");
 
+  // ✅ KEEP THIS EXACTLY (DO NOT CHANGE)
+  const openDirections = async () => {
+    if (!name) return;
+
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Location permission is required.");
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const origin = `${location.coords.latitude},${location.coords.longitude}`;
+      const destination = encodeURIComponent(name as string);
+
+      const url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+
+      Linking.openURL(url);
+    } catch (error) {
+      console.log("Error getting location:", error);
+      Alert.alert("Error", "Unable to fetch location.");
+    }
+  };
+
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: themeColors.background }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <ScrollView>
         <Image source={imageSource} style={styles.image} />
 
@@ -42,54 +71,21 @@ export default function PostDetails() {
             {description}
           </Text>
 
-          {/* View 360 Map Button */}
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: themeColors.text },
-            ]}
-            onPress={() =>
-              router.push({
-                pathname: "/explore/map360",
-                params: { id, name },
-              })
-            }
-          >
-            <Text
-              style={[
-                styles.buttonText,
-                { color: themeColors.background },
-              ]}
-            >
-              {t("view360Map") || "View 360° Map"}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Check Distance Button */}
+          {/* ✅ ONLY BUTTON LEFT */}
           <TouchableOpacity
             style={[
               styles.secondaryButton,
               {
                 backgroundColor:
-                  theme === "dark"
-                    ? themeColors.card
-                    : themeColors.border,
+                  theme === "dark" ? themeColors.card : themeColors.border,
               },
             ]}
-            onPress={() =>
-              router.push({
-                pathname: "/explore/distance",
-                params: { id, name },
-              })
-            }
+            onPress={openDirections}
           >
             <Text
-              style={[
-                styles.secondaryButtonText,
-                { color: themeColors.text },
-              ]}
+              style={[styles.secondaryButtonText, { color: themeColors.text }]}
             >
-              {t("checkDistance") || "Check Distance"}
+              {t("checkDistance") || "Check Distance "}
             </Text>
           </TouchableOpacity>
         </View>
@@ -111,15 +107,6 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     marginBottom: 20,
-  },
-  button: {
-    padding: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  buttonText: {
-    fontWeight: "bold",
   },
   secondaryButton: {
     padding: 14,

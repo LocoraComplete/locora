@@ -218,20 +218,14 @@ export default function ExploreScreen() {
                 },
               ]}
               onPress={() =>
-                router.push({
-                  pathname: "/explore/[id]",
-                  params: {
-                    id: item._id,
-                    name: item.Name,
-                    description: item.Description,
-                    image: item.ImageURL,
-                  },
-                })
+                router.push(
+                  `/explore/${item._id}?name=${encodeURIComponent(item.Name || "")}&description=${encodeURIComponent(item.Description || "")}&image=${encodeURIComponent(item.ImageURL || "")}`
+                )
               }
             >
               <Image
                 source={
-                  item.ImageURL
+                  item.ImageURL && item.ImageURL.startsWith("http")
                     ? { uri: item.ImageURL }
                     : require("@/assets/images/amber-fort.jpg")
                 }
