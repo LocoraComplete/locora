@@ -1,6 +1,8 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import * as Location from "expo-location";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -16,6 +18,8 @@ import { API_BASE_URL } from "../../../config/api";
 import { colors } from "../../../config/colors";
 import { useLanguage } from "../../../context/languagecontext";
 import { useTheme } from "../../../context/themecontext";
+
+const locationCache: Record<string, { lat: number; lng: number }> = {};
 
 export default function ExploreScreen() {
   const router = useRouter();
@@ -40,6 +44,12 @@ export default function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [isNearbyActive, setIsNearbyActive] = useState(false);
+
+  const shuffleArray = (array: any[]) => {
+    return [...array].sort(() => Math.random() - 0.5);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -60,9 +70,9 @@ export default function ExploreScreen() {
         setEvents(e);
         setFood(f);
 
-        setFilteredPlaces(p);
-        setFilteredEvents(e);
-        setFilteredFood(f);
+        setFilteredPlaces(shuffleArray(p));
+        setFilteredEvents(shuffleArray(e));
+        setFilteredFood(shuffleArray(f));
       } catch (err: any) {
         setError(t("dataLoadFailed") || "Failed to load data. Check backend connection.");
       } finally {
@@ -72,6 +82,16 @@ export default function ExploreScreen() {
 
     fetchData();
   }, [language]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isNearbyActive) {
+        setFilteredPlaces(shuffleArray(places));
+        setFilteredEvents(shuffleArray(events));
+        setFilteredFood(shuffleArray(food));
+      }
+    }, [places, events, food, isNearbyActive])
+  );
 
   const fuzzyMatch = (text: string, query: string) => {
     return text.toLowerCase().includes(query.toLowerCase());
@@ -133,23 +153,146 @@ export default function ExploreScreen() {
     return cat;
   };
 
+  const getDistance = (
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number
+  ): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) ** 2;
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
+
+  const handleLocationSearch = async () => {
+    try {
+      if (isNearbyActive) {
+        setIsNearbyActive(false);
+        setFilteredPlaces(shuffleArray(places));
+        setFilteredEvents(shuffleArray(events));
+        setFilteredFood(shuffleArray(food));
+        return;
+      }
+
+      setIsNearbyActive(true);
+
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setIsNearbyActive(false);
+        return;
+      }
+
+      let userLocation = await Location.getCurrentPositionAsync({});
+      const userLat = userLocation.coords.latitude;
+      const userLng = userLocation.coords.longitude;
+
+      const nearbyPlaces: any[] = [];
+
+      for (let place of places) {
+        try {
+          let coords;
+
+          if (locationCache[place.Name]) {
+            coords = locationCache[place.Name];
+          } else {
+            const geo = await Location.geocodeAsync(place.Location || place.Name);
+            if (!geo.length) continue;
+
+            coords = {
+              lat: geo[0].latitude,
+              lng: geo[0].longitude,
+            };
+
+            locationCache[place.Name] = coords;
+          }
+
+          const distance = getDistance(userLat, userLng, coords.lat, coords.lng);
+
+          if (distance <= 100) {
+            nearbyPlaces.push(place);
+          }
+        } catch (err) {
+          console.log("Geocode error:", err);
+        }
+      }
+
+      if (nearbyPlaces.length === 0) {
+        setFilteredPlaces(shuffleArray(places));
+        setFilteredEvents(shuffleArray(events));
+        setFilteredFood(shuffleArray(food));
+        setIsNearbyActive(false);
+        return;
+      }
+
+      const placeIds = nearbyPlaces.map((p) => p.PlaceId);
+
+      const nearbyEvents = events.filter((e) =>
+        placeIds.includes(e.PlaceId)
+      );
+
+      const nearbyFood = food.filter((f) =>
+        placeIds.includes(f.PlaceId)
+      );
+
+      setFilteredPlaces(nearbyPlaces);
+      setFilteredEvents(nearbyEvents);
+      setFilteredFood(nearbyFood);
+    } catch (err) {
+      console.log(err);
+      setIsNearbyActive(false);
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <ScrollView style={styles.container}>
-        <TextInput
-          placeholder={t("searchLocations") || "Search locations..."}
-          placeholderTextColor={theme === "dark" ? "#999" : "#777"}
-          style={[
-            styles.searchBar,
-            {
-              borderColor: themeColors.border,
-              color: themeColors.text,
-              backgroundColor: themeColors.card,
-            },
-          ]}
-          value={searchText}
-          onChangeText={setSearchText}
-        />
+
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 18 }}>
+          <TextInput
+            placeholder={t("searchLocations") || "Search locations..."}
+            placeholderTextColor={theme === "dark" ? "#999" : "#777"}
+            style={[
+              styles.searchBar,
+              {
+                flex: 1,
+                borderColor: themeColors.border,
+                color: themeColors.text,
+                backgroundColor: themeColors.card,
+              },
+            ]}
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+
+          <TouchableOpacity onPress={handleLocationSearch} style={{ marginLeft: 10 }}>
+            <MaterialIcons
+              name="my-location"
+              size={24}
+              color={
+                isNearbyActive
+                  ? themeColors.text
+                  : theme === "dark"
+                  ? "#777"
+                  : "#999"
+              }
+            />
+          </TouchableOpacity>
+        </View>
+
+        {!isNearbyActive && (
+          <Text style={{ fontSize: 12, color: themeColors.text, opacity: 0.6, marginBottom: 10 }}>
+            Tap location icon to find nearby places
+          </Text>
+        )}
 
         <View style={styles.categoryContainer}>
           {["places", "events", "food"].map((cat) => (
@@ -184,8 +327,9 @@ export default function ExploreScreen() {
         </View>
 
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-          {t("recommended") || "Recommended"}{" "}
-          {getCategoryLabel(selectedCategory)}
+          {isNearbyActive
+            ? "📍 Nearby Results"
+            : `${t("recommended") || "Recommended"} ${getCategoryLabel(selectedCategory)}`}
         </Text>
 
         {notFound && (
@@ -217,11 +361,21 @@ export default function ExploreScreen() {
                   backgroundColor: themeColors.card,
                 },
               ]}
-              onPress={() =>
-                router.push(
-                  `/explore/${item._id}?name=${encodeURIComponent(item.Name || "")}&description=${encodeURIComponent(item.Description || "")}&image=${encodeURIComponent(item.ImageURL || "")}`
-                )
-              }
+              onPress={() => {
+                  let id = "";
+
+                  if (selectedCategory === "places") id = item.PlaceId;
+                  if (selectedCategory === "events") id = item.EventId;
+                  if (selectedCategory === "food") id = item.FoodId;
+
+                  router.push({
+                    pathname: "/explore/[id]",
+                    params: {
+                      id,
+                      category: selectedCategory,
+                    },
+                  });
+                }}
             >
               <Image
                 source={
@@ -251,21 +405,17 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-
   searchBar: {
     borderWidth: 1,
     borderRadius: 12,
     padding: 12,
     fontSize: 16,
-    marginBottom: 18,
   },
-
   categoryContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
   },
-
   categoryBox: {
     flex: 1,
     padding: 14,
@@ -273,23 +423,16 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
   },
-
   categoryText: { fontSize: 14 },
-
   sectionTitle: { fontSize: 18, marginBottom: 12 },
-
   postCard: {
     marginBottom: 18,
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
   },
-
   postImage: { height: 160, width: "100%" },
-
   postContent: { padding: 12 },
-
   postTitle: { fontSize: 16 },
-
   postDescription: { marginTop: 4 },
 });

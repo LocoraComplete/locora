@@ -1,8 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import { useState } from "react";
-import * as Location from "expo-location";
 
+import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
   StyleSheet,
@@ -11,12 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 import api from "../../config/api";
-import { useTheme } from "../../context/themecontext";
 import { colors } from "../../config/colors";
 import { useLanguage } from "../../context/languagecontext";
+import { useTheme } from "../../context/themecontext";
 
 export default function Login() {
   const router = useRouter();
@@ -84,7 +84,7 @@ export default function Login() {
 
       Alert.alert(
         t("success") || "Success",
-        `${t("welcome") || "Welcome"} ${res.data.Name}`
+        `${t("welcome") || "Welcome"} `
       );
 
       router.replace("/explore");
@@ -93,7 +93,7 @@ export default function Login() {
 
       Alert.alert(
         t("success") || "Success",
-        `${t("welcome") || "Welcome"} ${res.data.Name}`,
+        `${t("welcome") || "Welcome"} `,
         [
           {
             text: t("continue") || "Continue",

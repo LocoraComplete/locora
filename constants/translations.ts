@@ -8,7 +8,7 @@ export const translations = {
     editProfile: "Edit Profile",
     addPost: "Add Post",
     noPosts: "No posts yet",
-    welcome: "Welcome to Locora 🌍",
+    welcome: "Welcome to Locora ",
     tagline: "Wander • Explore • Discover",
 
     oldPassword: "Old Password",
@@ -132,6 +132,7 @@ unableStartChat: "Unable to start chat",
 
 view360Map: "View 360° Map",
 checkDistance: "Check Distance",
+"viewMap": "View Map",
 
 searchLocations: "Search locations...",
 recommended: "Recommended",
@@ -174,7 +175,7 @@ posts: "Posts",
 followers: "Followers",
 following: "Following",
 noPostsYet: "No posts yet",
-defaultBio: "Welcome to Locora 🌍",
+defaultBio: "Welcome to Locora ",
 
 route: "Route",
 
@@ -440,7 +441,7 @@ somethingWrong: "Something went wrong",
     editProfile: "प्रोफ़ाइल संपादित करें",
     addPost: "पोस्ट जोड़ें",
     noPosts: "अभी तक कोई पोस्ट नहीं",
-    welcome: "लोकॉरा में आपका स्वागत है 🌍",
+    welcome: "लोकॉरा में आपका स्वागत है ",
     tagline: "घूमें • खोजें • खोज करें",
 
     oldPassword: "पुराना पासवर्ड",
@@ -573,6 +574,7 @@ unableStartChat: "चैट शुरू नहीं हो सकी",
 
 view360Map: "360° मानचित्र देखें",
 checkDistance: "दूरी जांचें",
+"viewMap": "मानचित्र देखें",
 
 searchLocations: "स्थान खोजें...",
 recommended: "अनुशंसित",
