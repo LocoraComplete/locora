@@ -31,7 +31,7 @@ export default function Profile() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [posts, setPosts] = useState<{ PostId: string; ImageUrl: string }[]>([]);
+  const [posts, setPosts] = useState<{ PostId: string; ImageUrls: string[] }[]>([]);
 
 useFocusEffect(
   useCallback(() => {
@@ -189,13 +189,13 @@ useFocusEffect(
                 pathname: "/post-detail",
                 params: {
                   PostId: item.PostId,
-                  ImageUrl: item.ImageUrl,
+                  ImageUrls: JSON.stringify(item.ImageUrls),
                 },
               })
             }
           >
             <Image
-              source={{ uri: item.ImageUrl }}
+              source={{ uri: item.ImageUrls[0] }}
               style={{ width: "100%", height: "100%" }}
             />
           </TouchableOpacity>

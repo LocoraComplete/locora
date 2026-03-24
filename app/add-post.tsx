@@ -6,9 +6,11 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Image,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -22,9 +24,11 @@ export default function AddPost() {
   const router = useRouter();
   const { t } = useLanguage();
 
-  const [image, setImage] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
+  const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ================= PICK MULTIPLE IMAGES =================
   const pickImage = async () => {
     const permission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -35,18 +39,20 @@ export default function AddPost() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      mediaTypes: ["images"],
+      allowsMultipleSelection: true,
       quality: 0.8,
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      const uris = result.assets.map((asset) => asset.uri);
+      setImages(uris);
     }
   };
 
+  // ================= CREATE POST =================
   const handlePost = async () => {
-    if (!image) {
+    if (images.length === 0) {
       Alert.alert(t("selectImageFirst"));
       return;
     }
@@ -62,26 +68,24 @@ export default function AddPost() {
       const formData = new FormData();
 
       formData.append("UserId", parsedUser.UserId);
+      formData.append("Caption", caption);
 
-      const filename =
-        image.split("/").pop() || `photo-${Date.now()}.jpg`;
-      const match = /\.(\w+)$/.exec(filename);
+      images.forEach((img, index) => {
+        const filename = img.split("/").pop() || `photo-${Date.now()}.jpg`;
+        const match = /\.(\w+)$/.exec(filename);
 
-      let type = "image/jpeg";
+        let type = "image/jpeg";
+        if (match) {
+          const ext = match[1].toLowerCase();
+          type = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
+        }
 
-      if (match) {
-        const ext = match[1].toLowerCase();
-        type = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
-      }
-
-      formData.append(
-        "image",
-        {
-          uri: image,
+        formData.append("images", {
+          uri: img,
           name: filename,
           type,
-        } as any
-      );
+        } as any);
+      });
 
       const response = await api.post(
         "/api/posts/create",
@@ -109,6 +113,7 @@ export default function AddPost() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={28} />
@@ -119,12 +124,23 @@ export default function AddPost() {
         <View style={{ width: 28 }} />
       </View>
 
+      {/* IMAGE PICKER */}
       <TouchableOpacity
         style={styles.imageContainer}
         onPress={pickImage}
       >
-        {image ? (
-          <Image source={{ uri: image }} style={styles.image} />
+        {images.length > 0 ? (
+          <View style={{ flex: 1 }}>
+            <FlatList
+              data={images}
+              horizontal
+              pagingEnabled
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <Image source={{ uri: item }} style={styles.image} />
+              )}
+            />
+          </View>
         ) : (
           <View style={styles.placeholder}>
             <Ionicons
@@ -139,14 +155,24 @@ export default function AddPost() {
         )}
       </TouchableOpacity>
 
+      {/* CAPTION INPUT */}
+      <TextInput
+        placeholder="Write a caption..."
+        value={caption}
+        onChangeText={setCaption}
+        style={styles.captionInput}
+        multiline
+      />
+
+      {/* SHARE BUTTON */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity
           style={[
             styles.shareButton,
-            { backgroundColor: image ? "#0095f6" : "#ccc" },
+            { backgroundColor: images.length > 0 ? "#0095f6" : "#ccc" },
           ]}
           onPress={handlePost}
-          disabled={!image || loading}
+          disabled={images.length === 0 || loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
@@ -161,11 +187,13 @@ export default function AddPost() {
   );
 }
 
+// ================= STYLES =================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
   },
+
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -175,36 +203,54 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
+
   title: {
     fontSize: 18,
     fontWeight: "600",
   },
+
   imageContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+
   image: {
     width: "100%",
     height: "100%",
     resizeMode: "cover",
   },
+
   placeholder: {
     alignItems: "center",
   },
+
   selectText: {
     marginTop: 12,
     fontSize: 16,
     color: "#777",
   },
+
+  captionInput: {
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    margin: 16,
+    minHeight: 60,
+    textAlignVertical: "top",
+  },
+
   bottomContainer: {
     padding: 16,
   },
+
   shareButton: {
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
   },
+
   shareText: {
     color: "#fff",
     fontSize: 16,
