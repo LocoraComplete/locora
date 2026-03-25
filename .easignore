@@ -1,0 +1,11 @@
+.idea
+.vscode
+node_modules
+.git
+.gitignore
+npm-debug.log
+yarn-error.log
+.env
+.expo
+dist
+build
