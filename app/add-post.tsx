@@ -8,6 +8,7 @@ import {
   Alert,
   FlatList,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -15,11 +16,8 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLanguage } from "../context/languagecontext";
-
 import api from "../config/api";
-
-console.log("🌐 API BASE URL:", api.defaults.baseURL);
+import { useLanguage } from "../context/languagecontext";
 
 export default function AddPost() {
   const router = useRouter();
@@ -28,15 +26,21 @@ export default function AddPost() {
   const [images, setImages] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+
+  const addLog = (msg: string) => {
+    console.log(msg);
+    setDebugLog((prev) => [...prev, msg]);
+  };
 
   // ================= PICK MULTIPLE IMAGES =================
   const pickImage = async () => {
-    console.log("📸 Requesting media library permission...");
+    addLog("📸 Requesting media permission");
 
     const permission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    console.log("📸 Permission result:", permission);
+    addLog(`📸 Permission: ${JSON.stringify(permission)}`);
 
     if (!permission.granted) {
       Alert.alert(t("permissionRequired"));
@@ -49,37 +53,36 @@ export default function AddPost() {
       quality: 0.8,
     });
 
-    console.log("📸 Picker result:", result);
+    addLog(`📸 Picker result: ${JSON.stringify(result)}`);
 
     if (!result.canceled) {
       const uris = result.assets.map((asset) => asset.uri);
-      console.log("🖼️ Selected image URIs:", uris);
+      addLog(`🖼️ Selected ${uris.length} images`);
       setImages(uris);
     } else {
-      console.log("❌ Image selection canceled");
+      addLog("❌ Selection cancelled");
     }
   };
 
   // ================= CREATE POST =================
   const handlePost = async () => {
-    console.log("🚀 Handle Post Triggered");
+    addLog("🚀 Handle post started");
 
     if (images.length === 0) {
-      console.log("⚠️ No images selected");
+      addLog("⚠️ No images selected");
       Alert.alert(t("selectImageFirst"));
       return;
     }
 
     const storedUser = await AsyncStorage.getItem("user");
-    console.log("👤 Stored user raw:", storedUser);
+    addLog(`👤 Stored user: ${storedUser}`);
 
     if (!storedUser) {
-      console.log("❌ No user found in storage");
+      addLog("❌ User not found");
       return Alert.alert(t("userNotFound"));
     }
 
     const parsedUser = JSON.parse(storedUser);
-    console.log("👤 Parsed user:", parsedUser);
 
     try {
       setLoading(true);
@@ -89,7 +92,8 @@ export default function AddPost() {
       formData.append("UserId", parsedUser.UserId);
       formData.append("Caption", caption);
 
-      console.log("📝 Caption:", caption);
+      addLog(`📝 Caption: ${caption}`);
+      addLog(`👤 UserId: ${parsedUser.UserId}`);
 
       images.forEach((img, index) => {
         const filename =
@@ -102,47 +106,54 @@ export default function AddPost() {
           type = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
         }
 
-        console.log(`🖼️ Image ${index + 1}:`, {
-          uri: img,
-          name: filename,
-          type,
-        });
+        addLog(`🖼️ Image ${index + 1}: ${filename}`);
 
         formData.append("images", {
           uri: img,
           name: filename,
-          type: type || "image/jpeg",
+          type,
         } as any);
       });
 
-      console.log("📦 Sending POST request to /api/posts/create");
+      addLog("📦 Sending POST request");
 
       const response = await api.post(
         "/api/posts/create",
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
+        formData
       );
 
-      console.log("✅ POST SUCCESS RESPONSE:", response.data);
+      addLog(`✅ Success: ${JSON.stringify(response.data)}`);
 
       Alert.alert(t("postCreated"));
       router.push("/(tabs)/profile");
     } catch (err: any) {
-      console.log("❌ POST ERROR FULL:", err);
-      console.log("❌ POST ERROR RESPONSE:", err?.response?.data);
-      console.log("❌ POST ERROR MESSAGE:", err?.message);
+      addLog(`❌ Error message: ${err?.message}`);
+      addLog(
+        `❌ Error response: ${JSON.stringify(
+          err?.response?.data || {}
+        )}`
+      );
 
       Alert.alert(t("postError"));
     } finally {
       setLoading(false);
-      console.log("🔄 Loading finished");
+      addLog("🔄 Loading finished");
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* DEBUG OVERLAY */}
+      <View style={styles.debugOverlay}>
+        <ScrollView>
+          {debugLog.map((log, index) => (
+            <Text key={index} style={styles.debugText}>
+              {log}
+            </Text>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -150,7 +161,6 @@ export default function AddPost() {
         </TouchableOpacity>
 
         <Text style={styles.title}>{t("newPost")}</Text>
-
         <View style={{ width: 28 }} />
       </View>
 
@@ -166,12 +176,9 @@ export default function AddPost() {
               horizontal
               pagingEnabled
               keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => {
-                console.log("🖼️ Rendering image URI:", item);
-                return (
-                  <Image source={{ uri: item }} style={styles.image} />
-                );
-              }}
+              renderItem={({ item }) => (
+                <Image source={{ uri: item }} style={styles.image} />
+              )}
             />
           </View>
         ) : (
@@ -188,7 +195,7 @@ export default function AddPost() {
         )}
       </TouchableOpacity>
 
-      {/* CAPTION INPUT */}
+      {/* CAPTION */}
       <TextInput
         placeholder="Write a caption..."
         value={caption}
@@ -202,7 +209,10 @@ export default function AddPost() {
         <TouchableOpacity
           style={[
             styles.shareButton,
-            { backgroundColor: images.length > 0 ? "#0095f6" : "#ccc" },
+            {
+              backgroundColor:
+                images.length > 0 ? "#0095f6" : "#ccc",
+            },
           ]}
           onPress={handlePost}
           disabled={images.length === 0 || loading}
@@ -210,9 +220,7 @@ export default function AddPost() {
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.shareText}>
-              {t("share")}
-            </Text>
+            <Text style={styles.shareText}>{t("share")}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -220,11 +228,22 @@ export default function AddPost() {
   );
 }
 
-// ================= STYLES =================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+
+  debugOverlay: {
+    maxHeight: 140,
+    backgroundColor: "#111",
+    padding: 8,
+  },
+
+  debugText: {
+    color: "#00ff88",
+    fontSize: 11,
+    marginBottom: 2,
   },
 
   header: {
