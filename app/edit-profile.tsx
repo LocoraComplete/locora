@@ -56,12 +56,12 @@ export default function EditProfile() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       quality: 0.8,
     });
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets?.length > 0) {
       setProfilePic(result.assets[0].uri);
     }
   };
@@ -98,8 +98,7 @@ export default function EditProfile() {
 
       const response = await api.put(
         `/api/users/update-profile/${userId}`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
 
     const updatedUser = {

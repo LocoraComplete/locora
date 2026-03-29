@@ -48,19 +48,19 @@ export default function AddPost() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsMultipleSelection: true,
       quality: 0.8,
     });
 
     addLog(`📸 Picker result: ${JSON.stringify(result)}`);
 
-    if (!result.canceled) {
+    if (!result.canceled && result.assets?.length > 0) {
       const uris = result.assets.map((asset) => asset.uri);
       addLog(`🖼️ Selected ${uris.length} images`);
       setImages(uris);
     } else {
-      addLog("❌ Selection cancelled");
+      addLog("❌ No assets returned from picker");
     }
   };
 
