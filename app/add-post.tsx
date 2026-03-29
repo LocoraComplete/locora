@@ -18,7 +18,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLanguage } from "../context/languagecontext";
 
 import api from "../config/api";
-console.log("API BASE URL:", api.defaults.baseURL);
+
+console.log("🌐 API BASE URL:", api.defaults.baseURL);
 
 export default function AddPost() {
   const router = useRouter();
@@ -30,8 +31,12 @@ export default function AddPost() {
 
   // ================= PICK MULTIPLE IMAGES =================
   const pickImage = async () => {
+    console.log("📸 Requesting media library permission...");
+
     const permission =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    console.log("📸 Permission result:", permission);
 
     if (!permission.granted) {
       Alert.alert(t("permissionRequired"));
@@ -39,28 +44,42 @@ export default function AddPost() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
       quality: 0.8,
     });
 
+    console.log("📸 Picker result:", result);
+
     if (!result.canceled) {
       const uris = result.assets.map((asset) => asset.uri);
+      console.log("🖼️ Selected image URIs:", uris);
       setImages(uris);
+    } else {
+      console.log("❌ Image selection canceled");
     }
   };
 
   // ================= CREATE POST =================
   const handlePost = async () => {
+    console.log("🚀 Handle Post Triggered");
+
     if (images.length === 0) {
+      console.log("⚠️ No images selected");
       Alert.alert(t("selectImageFirst"));
       return;
     }
 
     const storedUser = await AsyncStorage.getItem("user");
-    if (!storedUser) return Alert.alert(t("userNotFound"));
+    console.log("👤 Stored user raw:", storedUser);
+
+    if (!storedUser) {
+      console.log("❌ No user found in storage");
+      return Alert.alert(t("userNotFound"));
+    }
 
     const parsedUser = JSON.parse(storedUser);
+    console.log("👤 Parsed user:", parsedUser);
 
     try {
       setLoading(true);
@@ -70,8 +89,11 @@ export default function AddPost() {
       formData.append("UserId", parsedUser.UserId);
       formData.append("Caption", caption);
 
+      console.log("📝 Caption:", caption);
+
       images.forEach((img, index) => {
-        const filename = img.split("/").pop() || `photo-${Date.now()}.jpg`;
+        const filename =
+          img.split("/").pop() || `photo-${Date.now()}.jpg`;
         const match = /\.(\w+)$/.exec(filename);
 
         let type = "image/jpeg";
@@ -80,34 +102,42 @@ export default function AddPost() {
           type = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
         }
 
-        formData.append("images", {
+        console.log(`🖼️ Image ${index + 1}:`, {
           uri: img,
           name: filename,
           type,
+        });
+
+        formData.append("images", {
+          uri: img,
+          name: filename,
+          type: type || "image/jpeg",
         } as any);
       });
+
+      console.log("📦 Sending POST request to /api/posts/create");
 
       const response = await api.post(
         "/api/posts/create",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
-          transformRequest: (data) => data,
         }
       );
 
-      console.log("POST RESPONSE:", response.data);
+      console.log("✅ POST SUCCESS RESPONSE:", response.data);
 
       Alert.alert(t("postCreated"));
       router.push("/(tabs)/profile");
     } catch (err: any) {
-      console.log(
-        "POST ERROR:",
-        err?.response?.data || err.message
-      );
+      console.log("❌ POST ERROR FULL:", err);
+      console.log("❌ POST ERROR RESPONSE:", err?.response?.data);
+      console.log("❌ POST ERROR MESSAGE:", err?.message);
+
       Alert.alert(t("postError"));
     } finally {
       setLoading(false);
+      console.log("🔄 Loading finished");
     }
   };
 
@@ -136,9 +166,12 @@ export default function AddPost() {
               horizontal
               pagingEnabled
               keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <Image source={{ uri: item }} style={styles.image} />
-              )}
+              renderItem={({ item }) => {
+                console.log("🖼️ Rendering image URI:", item);
+                return (
+                  <Image source={{ uri: item }} style={styles.image} />
+                );
+              }}
             />
           </View>
         ) : (

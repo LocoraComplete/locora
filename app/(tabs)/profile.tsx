@@ -124,7 +124,7 @@ useFocusEffect(
                     {posts.length}
                   </Text>
                   <Text style={[styles.statLabel, { color: themeColors.secondaryText }]}>
-                    Posts
+                    {t("posts")}
                   </Text>
                 </View>
               </View>

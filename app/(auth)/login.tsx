@@ -28,6 +28,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [secure, setSecure] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,19 +36,14 @@ export default function Login() {
   };
 
   const requestLocationPermission = async () => {
-    const { status } =
-      await Location.requestForegroundPermissionsAsync();
-
+    const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
       Alert.alert(
         t("locationRequired") || "Location Required",
         t("locationPermissionMessage") ||
           "Location permission is required for SOS feature to work."
       );
-      return false;
     }
-
-    return true;
   };
 
   const handleLogin = async () => {
@@ -77,38 +73,18 @@ export default function Login() {
 
       console.log("✅ Login response:", res.data);
 
-      await AsyncStorage.setItem(
-        "user",
-        JSON.stringify(res.data)
-      );
+      if (rememberMe) {
+        await AsyncStorage.setItem("user", JSON.stringify(res.data));
+        await AsyncStorage.setItem("rememberMe", "true");
+      } else {
+        await AsyncStorage.removeItem("user");
+        await AsyncStorage.removeItem("rememberMe");
+      }
 
-      Alert.alert(
-        t("success") || "Success",
-        `${t("welcome") || "Welcome"} `
-      );
+      // Non-blocking — don't await, navigate immediately
+      requestLocationPermission();
+      router.replace("/(tabs)/explore");
 
-      router.replace("/explore");
-
-      await AsyncStorage.setItem("user", JSON.stringify(res.data));
-
-      Alert.alert(
-        t("success") || "Success",
-        `${t("welcome") || "Welcome"} `,
-        [
-          {
-            text: t("continue") || "Continue",
-            onPress: async () => {
-              const permissionGranted =
-                await requestLocationPermission();
-
-              if (permissionGranted) {
-                router.replace("/explore");
-              }
-            },
-          },
-        ],
-        { cancelable: false }
-      );
     } catch (error: any) {
       Alert.alert(
         t("loginFailed") || "Login Failed",
@@ -120,58 +96,33 @@ export default function Login() {
   };
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: themeColors.background },
-      ]}
-    >
-      <Text
-        style={[
-          styles.title,
-          { color: themeColors.text },
-        ]}
-      >
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <Text style={[styles.title, { color: themeColors.text }]}>
         LOCORA
       </Text>
 
       <TextInput
-        style={[
-          styles.input,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-            color: themeColors.text,
-          },
-        ]}
+        style={[styles.input, {
+          borderColor: themeColors.border,
+          backgroundColor: themeColors.card,
+          color: themeColors.text,
+        }]}
         placeholder={t("email") || "Email"}
-        placeholderTextColor={
-          theme === "dark" ? "#888" : "#999"
-        }
+        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
         keyboardType="email-address"
       />
 
-      <View
-        style={[
-          styles.passwordContainer,
-          {
-            borderColor: themeColors.border,
-            backgroundColor: themeColors.card,
-          },
-        ]}
-      >
+      <View style={[styles.passwordContainer, {
+        borderColor: themeColors.border,
+        backgroundColor: themeColors.card,
+      }]}>
         <TextInput
-          style={[
-            styles.passwordInput,
-            { color: themeColors.text },
-          ]}
+          style={[styles.passwordInput, { color: themeColors.text }]}
           placeholder={t("password") || "Password"}
-          placeholderTextColor={
-            theme === "dark" ? "#888" : "#999"
-          }
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
           value={password}
           onChangeText={setPassword}
           secureTextEntry={secure}
@@ -186,43 +137,38 @@ export default function Login() {
       </View>
 
       <TouchableOpacity
+        style={styles.rememberContainer}
+        onPress={() => setRememberMe(!rememberMe)}
+      >
+        <Ionicons
+          name={rememberMe ? "checkbox" : "square-outline"}
+          size={22}
+          color={themeColors.text}
+        />
+        <Text style={{ color: themeColors.text, marginLeft: 8 }}>
+          {t("rememberMe") || "Remember Me"}
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
         style={[
           styles.loginButton,
-          {
-            backgroundColor:
-              theme === "dark" ? "#ffffff" : "#000000",
-          },
+          { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" },
           loading && { opacity: 0.6 },
         ]}
         onPress={handleLogin}
         disabled={loading}
       >
-        <Text
-          style={[
-            styles.loginText,
-            {
-              color:
-                theme === "dark" ? "#000000" : "#ffffff",
-            },
-          ]}
-        >
-          {loading
-            ? t("loggingIn") || "Logging in..."
-            : t("login") || "Login"}
+        <Text style={[styles.loginText, {
+          color: theme === "dark" ? "#000000" : "#ffffff",
+        }]}>
+          {loading ? t("loggingIn") || "Logging in..." : t("login") || "Login"}
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        onPress={() => router.push("/(auth)/signup")}
-      >
-        <Text
-          style={[
-            styles.signupText,
-            { color: "#4F46E5" },
-          ]}
-        >
-          {t("noAccount") ||
-            "Don’t have an account? Sign Up"}
+      <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+        <Text style={[styles.signupText, { color: "#4F46E5" }]}>
+          {t("noAccount") || "Don't have an account? Sign Up"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -230,23 +176,9 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 40,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
+  container: { flex: 1, justifyContent: "center", paddingHorizontal: 24 },
+  title: { fontSize: 32, fontWeight: "700", textAlign: "center", marginBottom: 40 },
+  input: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 16 },
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -255,24 +187,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginBottom: 16,
   },
-  passwordInput: {
-    flex: 1,
-    paddingVertical: 14,
-  },
-  loginButton: {
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 6,
-  },
-  loginText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  signupText: {
-    textAlign: "center",
-    marginTop: 20,
-    fontSize: 14,
-    fontWeight: "500",
-  },
+  passwordInput: { flex: 1, paddingVertical: 14 },
+  rememberContainer: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+  loginButton: { padding: 15, borderRadius: 12, alignItems: "center", marginTop: 6 },
+  loginText: { fontSize: 16, fontWeight: "600" },
+  signupText: { textAlign: "center", marginTop: 20, fontSize: 14, fontWeight: "500" },
 });
