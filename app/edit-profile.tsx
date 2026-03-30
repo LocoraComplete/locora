@@ -85,15 +85,18 @@ export default function EditProfile() {
       formData.append("pronouns", pronouns);
       formData.append("bio", bio);
 
-      if (profilePic) {
-        formData.append(
-          "profilePic",
-          {
-            uri: profilePic,
-            name: "profile.jpg",
-            type: "image/jpeg",
-          } as any
-        );
+      if (
+        profilePic &&
+        !profilePic.startsWith("http")
+      ) {
+        const filename =
+          profilePic.split("/").pop() || "profile.jpg";
+
+        formData.append("profilePic", {
+          uri: profilePic,
+          name: filename,
+          type: "image/jpeg",
+        } as any);
       }
 
       const response = await api.put(

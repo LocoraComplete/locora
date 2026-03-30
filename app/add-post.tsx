@@ -97,16 +97,16 @@ export default function AddPost() {
 
       images.forEach((img, index) => {
         const filename =
-          img.split("/").pop() || `photo-${Date.now()}.jpg`;
-        const match = /\.(\w+)$/.exec(filename);
+          img.split("/").pop() ||
+          `photo-${Date.now()}-${index}.jpg`;
 
-        let type = "image/jpeg";
-        if (match) {
-          const ext = match[1].toLowerCase();
-          type = ext === "jpg" ? "image/jpeg" : `image/${ext}`;
-        }
+        const ext =
+          filename.split(".").pop()?.toLowerCase() || "jpg";
 
-        addLog(`🖼️ Image ${index + 1}: ${filename}`);
+        const type =
+          ext === "jpg" || ext === "jpeg"
+            ? "image/jpeg"
+            : `image/${ext}`;
 
         formData.append("images", {
           uri: img,
