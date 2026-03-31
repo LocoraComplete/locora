@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -8,6 +9,7 @@ import {
   Alert,
   FlatList,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -35,37 +37,57 @@ export default function AddPost() {
 
   // ================= PICK MULTIPLE IMAGES =================
   const pickImage = async () => {
-    addLog("📸 Requesting media permission");
+    setDebugLog([]); // Clear logs for a fresh start
+    addLog("1. 📸 Requesting media permission...");
 
-    const permission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      addLog(`2. 📸 Permission result: ${permission.granted ? "GRANTED" : "DENIED"}`);
 
-    addLog(`📸 Permission: ${JSON.stringify(permission)}`);
+      if (!permission.granted) {
+        addLog("❌ Permission not granted. Stopping.");
+        Alert.alert(t("permissionRequired"));
+        return;
+      }
 
-    if (!permission.granted) {
-      Alert.alert(t("permissionRequired"));
-      return;
-    }
+      addLog("3. 🚀 Launching Library...");
+      
+      // CRITICAL: Using the most compatible settings for Android APKs
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use the Enum, not a string array
+        allowsMultipleSelection: true,
+        quality: 0.7, // Lower quality slightly to reduce memory pressure in APK
+        selectionLimit: 10,
+      });
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsMultipleSelection: true,
-      quality: 0.8,
-    });
+      addLog("4. 📥 Picker returned.");
 
-    addLog(`📸 Picker result: ${JSON.stringify(result)}`);
+      if (result.canceled) {
+        addLog("⚠️ User cancelled the picker.");
+        return;
+      }
 
-    if (!result.canceled && result.assets?.length > 0) {
-      const uris = result.assets.map((asset) => asset.uri);
-      addLog(`🖼️ Selected ${uris.length} images`);
-      setImages(uris);
-    } else {
-      addLog("❌ No assets returned from picker");
+      if (result.assets && result.assets.length > 0) {
+        addLog(`5. 🖼️ Found ${result.assets.length} assets.`);
+        const uris = result.assets.map((asset) => asset.uri);
+        
+        // Log the first URI to see the format (content:// vs file://)
+        addLog(`6. 🔗 First URI: ${uris[0].substring(0, 30)}...`);
+        
+        setImages(uris);
+        addLog("7. ✅ State updated with URIs.");
+      } else {
+        addLog("❌ No assets found in result object.");
+      }
+
+    } catch (error: any) {
+      addLog(`‼️ CRASH in pickImage: ${error?.message}`);
+      console.error(error);
     }
   };
 
   // ================= CREATE POST =================
-  const handlePost = async () => {
+const handlePost = async () => {
     addLog("🚀 Handle post started");
 
     if (images.length === 0) {
@@ -75,8 +97,6 @@ export default function AddPost() {
     }
 
     const storedUser = await AsyncStorage.getItem("user");
-    addLog(`👤 Stored user: ${storedUser}`);
-
     if (!storedUser) {
       addLog("❌ User not found");
       return Alert.alert(t("userNotFound"));
@@ -86,58 +106,58 @@ export default function AddPost() {
 
     try {
       setLoading(true);
-
       const formData = new FormData();
 
       formData.append("UserId", parsedUser.UserId);
       formData.append("Caption", caption);
 
-      addLog(`📝 Caption: ${caption}`);
-      addLog(`👤 UserId: ${parsedUser.UserId}`);
+      addLog(`👤 UserId: ${parsedUser.UserId} | Caption: ${caption}`);
 
-      images.forEach((img, index) => {
-        const filename =
-          img.split("/").pop() ||
-          `photo-${Date.now()}-${index}.jpg`;
+      for (let i = 0; i < images.length; i++) {
+        let imgUri = images[i];
 
-        const ext =
-          filename.split(".").pop()?.toLowerCase() || "jpg";
+        // 1. FORCIBLY COPY TO CACHE (Fixes content:// provider issues in APK)
+        const filename = `upload-${Date.now()}-${i}.jpg`;
+        const newPath = FileSystem.cacheDirectory + filename;
 
-        const type =
-          ext === "jpg" || ext === "jpeg"
-            ? "image/jpeg"
-            : `image/${ext}`;
+        addLog(`📂 Copying ${i} to: ${newPath}`);
+        
+        await FileSystem.copyAsync({
+          from: imgUri,
+          to: newPath,
+        });
+
+        // 2. ANDROID URI FIX
+        // In APKs, sometimes the URI needs 'file://' and sometimes it needs the prefix removed.
+        // This format is the most stable for React Native's FormData:
+        const finalUri = Platform.OS === "android" ? newPath : newPath.replace("file://", "");
 
         formData.append("images", {
-          uri: img,
+          uri: finalUri,
           name: filename,
-          type,
+          type: "image/jpeg",
         } as any);
-      });
+        
+        addLog(`✅ Appended image ${i}`);
+      }
 
-      addLog("📦 Sending POST request");
+      addLog("📦 Sending POST request...");
 
-      const response = await api.post(
-        "/api/posts/create",
-        formData
-      );
+      const response = await api.post("/api/posts/create", formData);
 
-      addLog(`✅ Success: ${JSON.stringify(response.data)}`);
-
+      addLog(`✅ Server Response: ${JSON.stringify(response.data)}`);
       Alert.alert(t("postCreated"));
       router.push("/(tabs)/profile");
-    } catch (err: any) {
-      addLog(`❌ Error message: ${err?.message}`);
-      addLog(
-        `❌ Error response: ${JSON.stringify(
-          err?.response?.data || {}
-        )}`
-      );
 
+    } catch (err: any) {
+      addLog(`❌ ERROR: ${err?.message}`);
+      if (err?.response) {
+        addLog(`❌ DATA: ${JSON.stringify(err.response.data)}`);
+      }
       Alert.alert(t("postError"));
     } finally {
       setLoading(false);
-      addLog("🔄 Loading finished");
+      addLog("🔄 Finished");
     }
   };
 

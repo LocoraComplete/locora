@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -85,19 +86,28 @@ export default function EditProfile() {
       formData.append("pronouns", pronouns);
       formData.append("bio", bio);
 
-      if (
-        profilePic &&
-        !profilePic.startsWith("http")
-      ) {
-        const filename =
-          profilePic.split("/").pop() || "profile.jpg";
+      if (profilePic && !profilePic.startsWith("http")) {
+      let img = profilePic;
 
-        formData.append("profilePic", {
-          uri: profilePic,
-          name: filename,
-          type: "image/jpeg",
-        } as any);
+      if (img.startsWith("content://")) {
+        const newPath = FileSystem.cacheDirectory + `profile-${Date.now()}.jpg`;
+
+        await FileSystem.copyAsync({
+          from: img,
+          to: newPath,
+        });
+
+        img = newPath;
       }
+
+      const filename = img.split("/").pop() || "profile.jpg";
+
+      formData.append("profilePic", {
+        uri: img,
+        name: filename,
+        type: "image/jpeg",
+      } as any);
+    }
 
       const response = await api.put(
         `/api/users/update-profile/${userId}`,
