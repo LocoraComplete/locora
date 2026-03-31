@@ -9,13 +9,11 @@ import {
   Alert,
   FlatList,
   Image,
-  Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../config/api";
@@ -28,29 +26,18 @@ export default function AddPost() {
   const [images, setImages] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
-  const [debugLog, setDebugLog] = useState<string[]>([]);
 
-  const addLog = (msg: string) => {
-    console.log(msg);
-    setDebugLog((prev) => [...prev, msg]);
-  };
 
   // ================= PICK MULTIPLE IMAGES =================
   const pickImage = async () => {
-    setDebugLog([]); // Clear logs for a fresh start
-    addLog("1. 📸 Requesting media permission...");
 
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      addLog(`2. 📸 Permission result: ${permission.granted ? "GRANTED" : "DENIED"}`);
 
       if (!permission.granted) {
-        addLog("❌ Permission not granted. Stopping.");
         Alert.alert(t("permissionRequired"));
         return;
       }
-
-      addLog("3. 🚀 Launching Library...");
       
       // CRITICAL: Using the most compatible settings for Android APKs
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -60,45 +47,35 @@ export default function AddPost() {
         selectionLimit: 10,
       });
 
-      addLog("4. 📥 Picker returned.");
 
       if (result.canceled) {
-        addLog("⚠️ User cancelled the picker.");
         return;
       }
 
       if (result.assets && result.assets.length > 0) {
-        addLog(`5. 🖼️ Found ${result.assets.length} assets.`);
         const uris = result.assets.map((asset) => asset.uri);
         
         // Log the first URI to see the format (content:// vs file://)
-        addLog(`6. 🔗 First URI: ${uris[0].substring(0, 30)}...`);
-        
         setImages(uris);
-        addLog("7. ✅ State updated with URIs.");
       } else {
-        addLog("❌ No assets found in result object.");
+        return;
       }
 
     } catch (error: any) {
-      addLog(`‼️ CRASH in pickImage: ${error?.message}`);
       console.error(error);
     }
   };
 
   // ================= CREATE POST =================
 const handlePost = async () => {
-    addLog("🚀 Handle post started");
 
     if (images.length === 0) {
-      addLog("⚠️ No images selected");
       Alert.alert(t("selectImageFirst"));
       return;
     }
 
     const storedUser = await AsyncStorage.getItem("user");
     if (!storedUser) {
-      addLog("❌ User not found");
       return Alert.alert(t("userNotFound"));
     }
 
@@ -111,8 +88,6 @@ const handlePost = async () => {
       formData.append("UserId", parsedUser.UserId);
       formData.append("Caption", caption);
 
-      addLog(`👤 UserId: ${parsedUser.UserId} | Caption: ${caption}`);
-
       for (let i = 0; i < images.length; i++) {
         let imgUri = images[i];
 
@@ -120,17 +95,13 @@ const handlePost = async () => {
         const filename = `upload-${Date.now()}-${i}.jpg`;
         const newPath = FileSystem.cacheDirectory + filename;
 
-        addLog(`📂 Copying ${i} to: ${newPath}`);
         
         await FileSystem.copyAsync({
           from: imgUri,
           to: newPath,
         });
 
-        // 2. ANDROID URI FIX
-        // In APKs, sometimes the URI needs 'file://' and sometimes it needs the prefix removed.
-        // This format is the most stable for React Native's FormData:
-        const finalUri = Platform.OS === "android" ? newPath : newPath.replace("file://", "");
+        const finalUri = newPath;
 
         formData.append("images", {
           uri: finalUri,
@@ -138,29 +109,18 @@ const handlePost = async () => {
           type: "image/jpeg",
         } as any);
         
-        addLog(`✅ Appended image ${i}`);
       }
 
-      addLog("📦 Sending POST request...");
 
       const response = await api.post("/api/posts/create", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-
-      addLog(`✅ Server Response: ${JSON.stringify(response.data)}`);
-
+  
       Alert.alert(t("postCreated"));
       router.push("/(tabs)/profile");
     } catch (err: any) {
-      addLog(`❌ ERROR: ${err.message}`);
-
-      if (err.response) {
-        addLog(`❌ STATUS: ${err.response.status}`);
-        addLog(`❌ DATA: ${JSON.stringify(err.response.data)}`);
-      }
-
       console.log("UPLOAD ERROR FULL:", err);
       Alert.alert(t("postError"));
     } finally {
@@ -170,16 +130,6 @@ const handlePost = async () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* DEBUG OVERLAY */}
-      <View style={styles.debugOverlay}>
-        <ScrollView>
-          {debugLog.map((log, index) => (
-            <Text key={index} style={styles.debugText}>
-              {log}
-            </Text>
-          ))}
-        </ScrollView>
-      </View>
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -259,18 +209,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
-  },
-
-  debugOverlay: {
-    maxHeight: 140,
-    backgroundColor: "#111",
-    padding: 8,
-  },
-
-  debugText: {
-    color: "#00ff88",
-    fontSize: 11,
-    marginBottom: 2,
   },
 
   header: {
