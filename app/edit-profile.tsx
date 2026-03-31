@@ -111,7 +111,12 @@ export default function EditProfile() {
 
       const response = await api.put(
         `/api/users/update-profile/${userId}`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
     const updatedUser = {
