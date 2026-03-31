@@ -143,21 +143,28 @@ const handlePost = async () => {
 
       addLog("📦 Sending POST request...");
 
-      const response = await api.post("/api/posts/create", formData);
+      const response = await api.post("/api/posts/create", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       addLog(`✅ Server Response: ${JSON.stringify(response.data)}`);
+
       Alert.alert(t("postCreated"));
       router.push("/(tabs)/profile");
-
     } catch (err: any) {
-      addLog(`❌ ERROR: ${err?.message}`);
-      if (err?.response) {
+      addLog(`❌ ERROR: ${err.message}`);
+
+      if (err.response) {
+        addLog(`❌ STATUS: ${err.response.status}`);
         addLog(`❌ DATA: ${JSON.stringify(err.response.data)}`);
       }
+
+      console.log("UPLOAD ERROR FULL:", err);
       Alert.alert(t("postError"));
     } finally {
       setLoading(false);
-      addLog("🔄 Finished");
     }
   };
 
