@@ -3,6 +3,8 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -86,101 +88,107 @@ export default function Signup() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[styles.container, { backgroundColor: themeColors.background }]}
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <Text style={[styles.title, { color: themeColors.text }]}>
-        {t("createAccount") || "Create Account"}
-      </Text>
-
-      <TextInput
-        style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
-        placeholder={t("firstName") || "First Name"}
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-        value={firstName}
-        onChangeText={setFirstName}
-      />
-
-      <TextInput
-        style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
-        placeholder={t("lastName") || "Last Name"}
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-        value={lastName}
-        onChangeText={setLastName}
-      />
-
-      <TextInput
-        style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
-        placeholder={t("email") || "Email"}
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-
-      <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
-        <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
-        <TextInput
-          style={[styles.phoneInput, { color: themeColors.text }]}
-          placeholder={t("enter10DigitNumber") || "Enter 10 digit number"}
-          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          keyboardType="number-pad"
-          value={phone}
-          onChangeText={(text) => handlePhoneChange(text, setPhone)}
-        />
-      </View>
-
-      <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
-        <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
-        <TextInput
-          style={[styles.phoneInput, { color: themeColors.text }]}
-          placeholder={t("primaryEmergencyContact") || "Primary Emergency Contact"}
-          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          keyboardType="number-pad"
-          value={primaryContact}
-          onChangeText={(text) => handlePhoneChange(text, setPrimaryContact)}
-        />
-      </View>
-
-      <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
-        <TextInput
-          style={[styles.passwordInput, { color: themeColors.text }]}
-          placeholder={t("password") || "Password"}
-          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          secureTextEntry={secure1}
-          value={password}
-          onChangeText={setPassword}
-        />
-        <TouchableOpacity onPress={() => setSecure1(!secure1)}>
-          <Ionicons name={secure1 ? "eye-off-outline" : "eye-outline"} size={22} color={themeColors.text} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
-        <TextInput
-          style={[styles.passwordInput, { color: themeColors.text }]}
-          placeholder={t("confirmPassword") || "Confirm Password"}
-          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          secureTextEntry={secure2}
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-        />
-        <TouchableOpacity onPress={() => setSecure2(!secure2)}>
-          <Ionicons name={secure2 ? "eye-off-outline" : "eye-outline"} size={22} color={themeColors.text} />
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity
-        style={[styles.signupButton, { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" }, loading && { opacity: 0.7 }]}
-        onPress={handleSignup}
-        disabled={loading}
+      <ScrollView
+        contentContainerStyle={[styles.container, { backgroundColor: themeColors.background }]}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text style={[styles.signupText, { color: theme === "dark" ? "#000000" : "#ffffff" }]}>
-          {loading ? t("creating") || "Creating..." : t("signUp") || "Sign Up"}
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          {t("createAccount") || "Create Account"}
         </Text>
-      </TouchableOpacity>
-    </ScrollView>
+
+        <TextInput
+          style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
+          placeholder={t("firstName") || "First Name"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          value={firstName}
+          onChangeText={setFirstName}
+        />
+
+        <TextInput
+          style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
+          placeholder={t("lastName") || "Last Name"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          value={lastName}
+          onChangeText={setLastName}
+        />
+
+        <TextInput
+          style={[styles.input, { borderColor: themeColors.border, backgroundColor: themeColors.card, color: themeColors.text }]}
+          placeholder={t("email") || "Email"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+        />
+
+        <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
+          <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
+          <TextInput
+            style={[styles.phoneInput, { color: themeColors.text }]}
+            placeholder={t("enter10DigitNumber") || "Enter 10 digit number"}
+            placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+            keyboardType="number-pad"
+            value={phone}
+            onChangeText={(text) => handlePhoneChange(text, setPhone)}
+          />
+        </View>
+
+        <View style={[styles.phoneContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
+          <Text style={[styles.prefix, { color: themeColors.text }]}>+91</Text>
+          <TextInput
+            style={[styles.phoneInput, { color: themeColors.text }]}
+            placeholder={t("primaryEmergencyContact") || "Primary Emergency Contact"}
+            placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+            keyboardType="number-pad"
+            value={primaryContact}
+            onChangeText={(text) => handlePhoneChange(text, setPrimaryContact)}
+          />
+        </View>
+
+        <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
+          <TextInput
+            style={[styles.passwordInput, { color: themeColors.text }]}
+            placeholder={t("password") || "Password"}
+            placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+            secureTextEntry={secure1}
+            value={password}
+            onChangeText={setPassword}
+          />
+          <TouchableOpacity onPress={() => setSecure1(!secure1)}>
+            <Ionicons name={secure1 ? "eye-off-outline" : "eye-outline"} size={22} color={themeColors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.passwordContainer, { borderColor: themeColors.border, backgroundColor: themeColors.card }]}>
+          <TextInput
+            style={[styles.passwordInput, { color: themeColors.text }]}
+            placeholder={t("confirmPassword") || "Confirm Password"}
+            placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+            secureTextEntry={secure2}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+          />
+          <TouchableOpacity onPress={() => setSecure2(!secure2)}>
+            <Ionicons name={secure2 ? "eye-off-outline" : "eye-outline"} size={22} color={themeColors.text} />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.signupButton, { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" }, loading && { opacity: 0.7 }]}
+          onPress={handleSignup}
+          disabled={loading}
+        >
+          <Text style={[styles.signupText, { color: theme === "dark" ? "#000000" : "#ffffff" }]}>
+            {loading ? t("creating") || "Creating..." : t("signUp") || "Sign Up"}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

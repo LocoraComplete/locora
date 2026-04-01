@@ -60,7 +60,7 @@ export default function PublicProfile() {
   /* ================= REDIRECT IF VIEWING OWN PROFILE ================= */
   useEffect(() => {
     if (currentUser && id === currentUser.UserId) {
-      router.replace("/(tabs)/profile");
+      router.back();
     }
   }, [currentUser]);
 
@@ -113,14 +113,6 @@ export default function PublicProfile() {
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>0</Text>
               <Text style={styles.statLabel}>{t("posts") || "Posts"}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>{t("followers") || "Followers"}</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>0</Text>
-              <Text style={styles.statLabel}>{t("following") || "Following"}</Text>
             </View>
           </View>
         </View>
@@ -220,13 +212,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     marginLeft: 20,
     flex: 1,
+    justifyContent: "center",
   },
   statItem: {
     alignItems: "center",
+    justifyContent: "center",
   },
   statNumber: {
     fontWeight: "700",

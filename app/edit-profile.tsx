@@ -5,6 +5,8 @@ import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -147,76 +149,81 @@ export default function EditProfile() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.header}>{t("editProfile")}</Text>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <Text style={styles.header}>{t("editProfile")}</Text>
 
-        <TouchableOpacity
-          style={styles.imageContainer}
-          onPress={pickImage}
-        >
-          {profilePic ? (
-  <Image
-    source={{ uri: profilePic }}
-    style={styles.profileImage} 
-  />
-) : (
-  <View style={styles.placeholder}>
-    <Text style={{ color: "#888" }}>Add Photo</Text>
-  </View>
-)}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.imageContainer}
+            onPress={pickImage}
+          >
+            {profilePic ? (
+              <Image
+                source={{ uri: profilePic }}
+                style={styles.profileImage} 
+              />
+            ) : (
+              <View style={styles.placeholder}>
+                <Text style={{ color: "#888" }}>Add Photo</Text>
+              </View>
+            )}
+          </TouchableOpacity>
 
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>{t("name")}</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-          />
-        </View>
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>{t("name")}</Text>
+            <TextInput
+              style={styles.input}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
 
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>{t("username")}</Text>
-          <TextInput
-            style={styles.input}
-            value={username}
-            onChangeText={setUsername}
-          />
-        </View>
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>{t("username")}</Text>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={setUsername}
+            />
+          </View>
 
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>{t("pronouns")}</Text>
-          <TextInput
-            style={styles.input}
-            value={pronouns}
-            onChangeText={setPronouns}
-          />
-        </View>
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>{t("pronouns")}</Text>
+            <TextInput
+              style={styles.input}
+              value={pronouns}
+              onChangeText={setPronouns}
+            />
+          </View>
 
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>{t("bio")}</Text>
-          <TextInput
-            style={[styles.input, styles.bioInput]}
-            value={bio}
-            onChangeText={setBio}
-            multiline
-            maxLength={150}
-          />
-          <Text style={styles.charCount}>
-            {bio.length}/150
-          </Text>
-        </View>
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>{t("bio")}</Text>
+            <TextInput
+              style={[styles.input, styles.bioInput]}
+              value={bio}
+              onChangeText={setBio}
+              multiline
+              maxLength={150}
+            />
+            <Text style={styles.charCount}>
+              {bio.length}/150
+            </Text>
+          </View>
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          disabled={loading}
-        >
-          <Text style={styles.saveText}>
-            {loading ? t("saving") : t("save")}
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={handleSave}
+            disabled={loading}
+          >
+            <Text style={styles.saveText}>
+              {loading ? t("saving") : t("save")}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

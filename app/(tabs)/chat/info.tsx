@@ -13,9 +13,9 @@ import {
   View,
 } from "react-native";
 
-import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
 import { useLanguage } from "../../../context/languagecontext";
+import { useTheme } from "../../../context/themecontext";
 
 export default function ChatInfo() {
   const { chatId, isPrivate } = useLocalSearchParams();
@@ -196,11 +196,45 @@ export default function ChatInfo() {
         { backgroundColor: themeColors.background },
       ]}
     >
-      <Text style={[styles.title, { color: themeColors.text }]}>
-        {privateChat
-          ? t("privateChat") || "Private Chat"
-          : chatData.GroupName}
-      </Text>
+      <View
+        style={[
+          styles.groupHeader,
+          { borderBottomColor: themeColors.border },
+        ]}
+      >
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          {privateChat
+            ? t("privateChat") || "Private Chat"
+            : chatData?.GroupName}
+        </Text>
+
+        {!privateChat && (
+          <>
+            <Text
+              style={[
+                styles.description,
+                { color: themeColors.secondaryText || "#666" },
+              ]}
+            >
+              {chatData?.Description?.trim()
+                ? chatData.Description
+                : "No group description"}
+            </Text>
+
+            <Text
+              style={[
+                styles.createdText,
+                { color: themeColors.secondaryText || "#888" },
+              ]}
+            >
+              Created on{" "}
+              {chatData?.CreatedOn
+                ? new Date(chatData.CreatedOn).toDateString()
+                : ""}
+            </Text>
+          </>
+        )}
+      </View>
 
       {privateChat && (
         <Pressable
@@ -336,5 +370,22 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 16,
     fontWeight: "600",
+  },
+
+  groupHeader: {
+    paddingBottom: 16,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+  },
+
+  description: {
+    fontSize: 14,
+    marginTop: 4,
+    lineHeight: 20,
+  },
+
+  createdText: {
+    fontSize: 12,
+    marginTop: 6,
   },
 });

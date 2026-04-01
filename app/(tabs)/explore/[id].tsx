@@ -128,7 +128,7 @@ useEffect(() => {
               </Text>
             )}
 
-            {(category === "places" || category === "food") && data.Type && (
+            {(category === "food") && data.Type && (
               <Text style={{ color: themeColors.text }}>
                 🏷 {data.Type}
               </Text>

@@ -25,6 +25,8 @@ type Guide = {
   location: string;
   experience: string;
   rating: number;
+  userRatingAverage: number;
+  totalReviews: number;
   phone: string;
   email: string;
   photo: string;
@@ -134,7 +136,11 @@ export default function Guide() {
               <View>
                 <Image source={{ uri: guide.photo }} style={styles.image} />
                 <View style={styles.ratingTag}>
-                  <Text style={styles.ratingText}>⭐ {guide.rating}</Text>
+                  <Text style={styles.ratingText}>
+                    ⭐ {(guide.userRatingAverage ?? 0) > 0
+                      ? Number(guide.userRatingAverage).toFixed(1)
+                      : Number(guide.rating).toFixed(1)}
+                  </Text>
                 </View>
               </View>
 
@@ -160,6 +166,7 @@ export default function Guide() {
                 >
                   🎖 {guide.experience} {t("yearsExperience") || "yrs Experience"}
                 </Text>
+
 
                 <View style={styles.footerRow}>
                   <Text

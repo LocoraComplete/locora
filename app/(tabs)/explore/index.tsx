@@ -2,10 +2,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import * as Location from "expo-location";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -25,7 +26,6 @@ export default function ExploreScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const themeColors = theme === "dark" ? colors.dark : colors.light;
-
   const { t, language } = useLanguage();
 
   const [searchText, setSearchText] = useState("");
@@ -46,6 +46,9 @@ export default function ExploreScreen() {
 
   const [isNearbyActive, setIsNearbyActive] = useState(false);
 
+  // NEW: cache user location once
+  const userCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+
   const shuffleArray = (array: any[]) => {
     return [...array].sort(() => Math.random() - 0.5);
   };
@@ -57,9 +60,15 @@ export default function ExploreScreen() {
         setError("");
 
         const [placesRes, eventsRes, foodRes] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/places?lang=${language}`, { timeout: 8000 }),
-          axios.get(`${API_BASE_URL}/api/events?lang=${language}`, { timeout: 8000 }),
-          axios.get(`${API_BASE_URL}/api/food?lang=${language}`, { timeout: 8000 }),
+          axios.get(`${API_BASE_URL}/api/places?lang=${language}`, {
+            timeout: 8000,
+          }),
+          axios.get(`${API_BASE_URL}/api/events?lang=${language}`, {
+            timeout: 8000,
+          }),
+          axios.get(`${API_BASE_URL}/api/food?lang=${language}`, {
+            timeout: 8000,
+          }),
         ]);
 
         const p = Array.isArray(placesRes.data) ? placesRes.data : [];
@@ -74,7 +83,10 @@ export default function ExploreScreen() {
         setFilteredEvents(shuffleArray(e));
         setFilteredFood(shuffleArray(f));
       } catch (err: any) {
-        setError(t("dataLoadFailed") || "Failed to load data. Check backend connection.");
+        setError(
+          t("dataLoadFailed") ||
+            "Failed to load data. Check backend connection."
+        );
       } finally {
         setLoading(false);
       }
@@ -175,6 +187,7 @@ export default function ExploreScreen() {
 
   const handleLocationSearch = async () => {
     try {
+      // instant toggle OFF
       if (isNearbyActive) {
         setIsNearbyActive(false);
         setFilteredPlaces(shuffleArray(places));
@@ -185,55 +198,76 @@ export default function ExploreScreen() {
 
       setIsNearbyActive(true);
 
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setIsNearbyActive(false);
-        return;
-      }
+      // use cached user location
+      if (!userCoordsRef.current) {
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
 
-      let userLocation = await Location.getCurrentPositionAsync({});
-      const userLat = userLocation.coords.latitude;
-      const userLng = userLocation.coords.longitude;
-
-      const nearbyPlaces: any[] = [];
-
-      for (let place of places) {
-        try {
-          let coords;
-
-          if (locationCache[place.Name]) {
-            coords = locationCache[place.Name];
-          } else {
-            const geo = await Location.geocodeAsync(place.Location || place.Name);
-            if (!geo.length) continue;
-
-            coords = {
-              lat: geo[0].latitude,
-              lng: geo[0].longitude,
-            };
-
-            locationCache[place.Name] = coords;
-          }
-
-          const distance = getDistance(userLat, userLng, coords.lat, coords.lng);
-
-          if (distance <= 100) {
-            nearbyPlaces.push(place);
-          }
-        } catch (err) {
-          console.log("Geocode error:", err);
+        if (status !== "granted") {
+          setIsNearbyActive(false);
+          return;
         }
+
+        const userLocation = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+
+        userCoordsRef.current = {
+          lat: userLocation.coords.latitude,
+          lng: userLocation.coords.longitude,
+        };
       }
+
+      const userLat = userCoordsRef.current.lat;
+      const userLng = userCoordsRef.current.lng;
+
+      // FAST: parallel geocoding
+      const nearbyPlacesResults = await Promise.all(
+        places.map(async (place) => {
+          try {
+            let coords;
+
+            if (locationCache[place.Name]) {
+              coords = locationCache[place.Name];
+            } else {
+              const geo = await Location.geocodeAsync(
+                place.Location || place.Name
+              );
+
+              if (!geo.length) return null;
+
+              coords = {
+                lat: geo[0].latitude,
+                lng: geo[0].longitude,
+              };
+
+              locationCache[place.Name] = coords;
+            }
+
+            const distance = getDistance(
+              userLat,
+              userLng,
+              coords.lat,
+              coords.lng
+            );
+
+            return distance <= 100 ? place : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+
+      const nearbyPlaces = nearbyPlacesResults.filter(Boolean);
 
       if (nearbyPlaces.length === 0) {
-        setFilteredPlaces(shuffleArray(places));
-        setFilteredEvents(shuffleArray(events));
-        setFilteredFood(shuffleArray(food));
-        setIsNearbyActive(false);
+        setFilteredPlaces([]);
+        setFilteredEvents([]);
+        setFilteredFood([]);
         return;
       }
 
-      const placeIds = nearbyPlaces.map((p) => p.PlaceId);
+      const placeIds = nearbyPlaces.map((p: any) => p.PlaceId);
 
       const nearbyEvents = events.filter((e) =>
         placeIds.includes(e.PlaceId)
@@ -254,9 +288,16 @@ export default function ExploreScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
-      <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={[styles.logo, { color: themeColors.text }]}>
+          Locora
+        </Text>
+      </View>
 
-        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 18 }}>
+      <ScrollView style={styles.container}>
+        <View
+          style={{ flexDirection: "row", alignItems: "center", marginBottom: 18 }}
+        >
           <TextInput
             placeholder={t("searchLocations") || "Search locations..."}
             placeholderTextColor={theme === "dark" ? "#999" : "#777"}
@@ -273,7 +314,10 @@ export default function ExploreScreen() {
             onChangeText={setSearchText}
           />
 
-          <TouchableOpacity onPress={handleLocationSearch} style={{ marginLeft: 10 }}>
+          <TouchableOpacity
+            onPress={handleLocationSearch}
+            style={{ marginLeft: 10 }}
+          >
             <MaterialIcons
               name="my-location"
               size={24}
@@ -289,7 +333,14 @@ export default function ExploreScreen() {
         </View>
 
         {!isNearbyActive && (
-          <Text style={{ fontSize: 12, color: themeColors.text, opacity: 0.6, marginBottom: 10 }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: themeColors.text,
+              opacity: 0.6,
+              marginBottom: 10,
+            }}
+          >
             Tap location icon to find nearby places
           </Text>
         )}
@@ -329,11 +380,19 @@ export default function ExploreScreen() {
         <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
           {isNearbyActive
             ? "📍 Nearby Results"
-            : `${t("recommended") || "Recommended"} ${getCategoryLabel(selectedCategory)}`}
+            : `${t("recommended") || "Recommended"} ${getCategoryLabel(
+                selectedCategory
+              )}`}
         </Text>
 
         {notFound && (
-          <Text style={{ textAlign: "center", marginBottom: 12, color: themeColors.text }}>
+          <Text
+            style={{
+              textAlign: "center",
+              marginBottom: 12,
+              color: themeColors.text,
+            }}
+          >
             {t("noResults") || "No Results Found"}
           </Text>
         )}
@@ -362,20 +421,20 @@ export default function ExploreScreen() {
                 },
               ]}
               onPress={() => {
-                  let id = "";
+                let id = "";
 
-                  if (selectedCategory === "places") id = item.PlaceId;
-                  if (selectedCategory === "events") id = item.EventId;
-                  if (selectedCategory === "food") id = item.FoodId;
+                if (selectedCategory === "places") id = item.PlaceId;
+                if (selectedCategory === "events") id = item.EventId;
+                if (selectedCategory === "food") id = item.FoodId;
 
-                  router.push({
-                    pathname: "/explore/[id]",
-                    params: {
-                      id,
-                      category: selectedCategory,
-                    },
-                  });
-                }}
+                router.push({
+                  pathname: "/explore/[id]",
+                  params: {
+                    id,
+                    category: selectedCategory,
+                  },
+                });
+              }}
             >
               <Image
                 source={
@@ -391,7 +450,9 @@ export default function ExploreScreen() {
                   {item.Name}
                 </Text>
 
-                <Text style={[styles.postDescription, { color: themeColors.text }]}>
+                <Text
+                  style={[styles.postDescription, { color: themeColors.text }]}
+                >
                   {item.Description}
                 </Text>
               </View>
@@ -404,6 +465,20 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(0,0,0,0.05)",
+  },
+  logo: {
+    fontSize: 32,
+    fontWeight: "700",
+    fontFamily: Platform.OS === "ios" ? "Snell Roundhand" : "serif",
+    fontStyle: "italic",
+    letterSpacing: 1.5,
+  },
   container: { flex: 1, padding: 16 },
   searchBar: {
     borderWidth: 1,

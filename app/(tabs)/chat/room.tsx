@@ -52,8 +52,6 @@ export default function Room() {
 
   /* LOAD USER */
   useEffect(() => {
-    socket.connect();
-
     const loadUser = async () => {
       const userString = await AsyncStorage.getItem("user");
       if (!userString) return;
@@ -69,10 +67,6 @@ export default function Room() {
     };
 
     loadUser();
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   /* LOAD MESSAGES */
@@ -94,7 +88,7 @@ export default function Room() {
 
       if (err?.response?.status === 403) {
         Alert.alert(t("chatAccessRemoved") || "You are no longer in this chat");
-        router.replace("/chat");
+        router.back();
       }
     }
   };
@@ -168,7 +162,10 @@ export default function Room() {
             <Pressable
               onPress={() => {
                 if (otherUserId) {
-                  router.push(`/profile/${otherUserId}`);
+                  router.push({
+                    pathname: "/profile/[id]",
+                    params: { id: otherUserId },
+                  });
                 }
               }}
             >

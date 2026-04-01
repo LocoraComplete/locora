@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter } from "expo-router";
+import { usePathname, useRouter } from "expo-router";
 import { useEffect } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { colors } from "../config/colors";
@@ -8,6 +8,7 @@ import { useTheme } from "../context/themecontext";
 
 export default function Index() {
   const router = useRouter();
+  const pathname = usePathname();
   const { theme } = useTheme();
   const { t } = useLanguage();
 
@@ -19,12 +20,13 @@ export default function Index() {
         const user = await AsyncStorage.getItem("user");
         const rememberMe = await AsyncStorage.getItem("rememberMe");
 
-        if (user && rememberMe === "true") {
-          router.replace("/(tabs)/explore");
-        } else {
-          router.replace("/(auth)/login");
-        }
-      } catch {
+        if (pathname === "/") {
+          if (user && rememberMe === "true") {
+            router.replace("/(tabs)/explore");
+          } else {
+            router.replace("/(auth)/login");
+          }
+        } }catch {
         router.replace("/(auth)/login");
       }
     }, 2500);

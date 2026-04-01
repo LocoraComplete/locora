@@ -6,6 +6,9 @@ import { useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -81,7 +84,6 @@ export default function Login() {
         await AsyncStorage.removeItem("rememberMe");
       }
 
-      // Non-blocking — don't await, navigate immediately
       requestLocationPermission();
       router.replace("/(tabs)/explore");
 
@@ -96,87 +98,95 @@ export default function Login() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <Text style={[styles.title, { color: themeColors.text }]}>
-        LOCORA
-      </Text>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView 
+        contentContainerStyle={[styles.container, { backgroundColor: themeColors.background }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text style={[styles.title, { color: themeColors.text }]}>
+          LOCORA
+        </Text>
 
-      <TextInput
-        style={[styles.input, {
+        <TextInput
+          style={[styles.input, {
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.card,
+            color: themeColors.text,
+          }]}
+          placeholder={t("email") || "Email"}
+          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+          value={email}
+          onChangeText={setEmail}
+          autoCapitalize="none"
+          keyboardType="email-address"
+        />
+
+        <View style={[styles.passwordContainer, {
           borderColor: themeColors.border,
           backgroundColor: themeColors.card,
-          color: themeColors.text,
-        }]}
-        placeholder={t("email") || "Email"}
-        placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
+        }]}>
+          <TextInput
+            style={[styles.passwordInput, { color: themeColors.text }]}
+            placeholder={t("password") || "Password"}
+            placeholderTextColor={theme === "dark" ? "#888" : "#999"}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={secure}
+          />
+          <TouchableOpacity onPress={() => setSecure(!secure)}>
+            <Ionicons
+              name={secure ? "eye-off-outline" : "eye-outline"}
+              size={22}
+              color={themeColors.text}
+            />
+          </TouchableOpacity>
+        </View>
 
-      <View style={[styles.passwordContainer, {
-        borderColor: themeColors.border,
-        backgroundColor: themeColors.card,
-      }]}>
-        <TextInput
-          style={[styles.passwordInput, { color: themeColors.text }]}
-          placeholder={t("password") || "Password"}
-          placeholderTextColor={theme === "dark" ? "#888" : "#999"}
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry={secure}
-        />
-        <TouchableOpacity onPress={() => setSecure(!secure)}>
+        <TouchableOpacity
+          style={styles.rememberContainer}
+          onPress={() => setRememberMe(!rememberMe)}
+        >
           <Ionicons
-            name={secure ? "eye-off-outline" : "eye-outline"}
+            name={rememberMe ? "checkbox" : "square-outline"}
             size={22}
             color={themeColors.text}
           />
+          <Text style={{ color: themeColors.text, marginLeft: 8 }}>
+            {t("rememberMe") || "Remember Me"}
+          </Text>
         </TouchableOpacity>
-      </View>
 
-      <TouchableOpacity
-        style={styles.rememberContainer}
-        onPress={() => setRememberMe(!rememberMe)}
-      >
-        <Ionicons
-          name={rememberMe ? "checkbox" : "square-outline"}
-          size={22}
-          color={themeColors.text}
-        />
-        <Text style={{ color: themeColors.text, marginLeft: 8 }}>
-          {t("rememberMe") || "Remember Me"}
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.loginButton,
+            { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" },
+            loading && { opacity: 0.6 },
+          ]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={[styles.loginText, {
+            color: theme === "dark" ? "#000000" : "#ffffff",
+          }]}>
+            {loading ? t("loggingIn") || "Logging in..." : t("login") || "Login"}
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[
-          styles.loginButton,
-          { backgroundColor: theme === "dark" ? "#ffffff" : "#000000" },
-          loading && { opacity: 0.6 },
-        ]}
-        onPress={handleLogin}
-        disabled={loading}
-      >
-        <Text style={[styles.loginText, {
-          color: theme === "dark" ? "#000000" : "#ffffff",
-        }]}>
-          {loading ? t("loggingIn") || "Logging in..." : t("login") || "Login"}
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
-        <Text style={[styles.signupText, { color: "#4F46E5" }]}>
-          {t("noAccount") || "Don't have an account? Sign Up"}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity onPress={() => router.push("/(auth)/signup")}>
+          <Text style={[styles.signupText, { color: "#4F46E5" }]}>
+            {t("noAccount") || "Don't have an account? Sign Up"}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", paddingHorizontal: 24 },
+  container: { flexGrow: 1, justifyContent: "center", paddingHorizontal: 24 },
   title: { fontSize: 32, fontWeight: "700", textAlign: "center", marginBottom: 40 },
   input: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 16 },
   passwordContainer: {

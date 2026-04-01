@@ -2,9 +2,9 @@ import { getSocket } from "@/config/socket";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 
-import { useTheme } from "../../../context/themecontext";
 import { colors } from "../../../config/colors";
 import { useLanguage } from "../../../context/languagecontext";
+import { useTheme } from "../../../context/themecontext";
 
 export default function ChatLayout() {
   const { theme } = useTheme();
@@ -18,11 +18,6 @@ export default function ChatLayout() {
       socket.connect();
       console.log("🟢 Socket connected from Chat layout");
     }
-
-    return () => {
-      socket.disconnect();
-      console.log("🔴 Socket disconnected from Chat layout");
-    };
   }, []);
 
   return (
