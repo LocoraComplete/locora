@@ -50,6 +50,13 @@ export default function Room() {
 
   const scrollRef = useRef<ScrollView>(null);
 
+  const formatMessageTime = (date: string) => {
+    return new Date(date).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   /* LOAD USER */
   useEffect(() => {
     const loadUser = async () => {
@@ -143,18 +150,19 @@ export default function Room() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: themeColors.background }]}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      style={{ flex: 1, backgroundColor: themeColors.background }}
+      behavior={Platform.OS === "ios" ? "padding" : "padding"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
     >
       {/* HEADER */}
       <View
         style={[
           styles.header,
-          { borderColor: themeColors.border },
+          { borderColor: themeColors.border, backgroundColor: themeColors.background },
         ]}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: 10 }}>
-          <Text style={{ fontSize: 18 }}>←</Text>
+          <Text style={{ fontSize: 18, color: themeColors.text }}>←</Text>
         </Pressable>
 
         <View style={{ flex: 1 }}>
@@ -170,40 +178,40 @@ export default function Room() {
               }}
             >
               <Text
-              style={[
-                styles.headerTitle,
-                { color: themeColors.text },
-              ]}
-            >
-              {otherUserHandle}
-            </Text>
+                style={[
+                  styles.headerTitle,
+                  { color: themeColors.text },
+                ]}
+              >
+                {otherUserHandle}
+              </Text>
               <Text
-              style={[
-                styles.headerSubtitle,
-                { color: themeColors.secondaryText },
-              ]}
-            >
-              {t("tapViewProfile") || "Tap to view profile"}
-            </Text>
+                style={[
+                  styles.headerSubtitle,
+                  { color: themeColors.secondaryText },
+                ]}
+              >
+                {t("tapViewProfile") || "Tap to view profile"}
+              </Text>
             </Pressable>
           ) : (
             <TouchableOpacity onPress={openGroupInfo}>
               <Text
-              style={[
-                styles.headerTitle,
-                { color: themeColors.text },
-              ]}
-            >
-              {title}
-            </Text>
+                style={[
+                  styles.headerTitle,
+                  { color: themeColors.text },
+                ]}
+              >
+                {title}
+              </Text>
               <Text
-              style={[
-                styles.headerSubtitle,
-                { color: themeColors.secondaryText },
-              ]}
-            >
-              {t("tapViewGroupInfo") || "Tap to view group info"}
-            </Text>
+                style={[
+                  styles.headerSubtitle,
+                  { color: themeColors.secondaryText },
+                ]}
+              >
+                {t("tapViewGroupInfo") || "Tap to view group info"}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
@@ -214,6 +222,8 @@ export default function Room() {
         ref={scrollRef}
         style={styles.messages}
         contentContainerStyle={{ paddingVertical: 10 }}
+        keyboardShouldPersistTaps="handled"
+        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
       >
         {messages.map((msg, index) => {
           if (msg.IsSystem) {
@@ -261,8 +271,19 @@ export default function Room() {
                 </Text>
               )}
 
-
               <Text style={{ color: themeColors.text }}>{msg.Text}</Text>
+
+              <Text
+                style={[
+                  styles.timestamp,
+                  {
+                    color: themeColors.secondaryText,
+                    alignSelf: isMine ? "flex-end" : "flex-start",
+                  },
+                ]}
+              >
+                {formatMessageTime(msg.CreatedAt)}
+              </Text>
             </View>
           );
         })}
@@ -272,7 +293,7 @@ export default function Room() {
       <View
         style={[
           styles.inputRow,
-          { borderColor: themeColors.border },
+          { borderColor: themeColors.border, backgroundColor: themeColors.background },
         ]}
       >
         <TextInput
@@ -288,8 +309,8 @@ export default function Room() {
           placeholderTextColor={theme === "dark" ? "#999" : "#666"}
           value={inputText}
           onChangeText={setInputText}
+          multiline={false}
         />
-
 
         <TouchableOpacity
           style={[styles.sendBtn, { backgroundColor: themeColors.text }]}
@@ -307,21 +328,15 @@ export default function Room() {
 /* STYLES */
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-
   header: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
     borderBottomWidth: 1,
-    borderColor: "#eee",
   },
-
   headerTitle: { fontSize: 18, fontWeight: "bold" },
-  headerSubtitle: { fontSize: 12, color: "#777", marginTop: 2 },
-
+  headerSubtitle: { fontSize: 12, marginTop: 2 },
   messages: { flex: 1, paddingHorizontal: 15 },
-
   messageReceived: {
     alignSelf: "flex-start",
     padding: 10,
@@ -329,8 +344,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
-
-
   messageSent: {
     alignSelf: "flex-end",
     padding: 10,
@@ -338,13 +351,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     maxWidth: "75%",
   },
-
   senderName: {
     fontSize: 10,
     fontWeight: "bold",
     marginBottom: 4,
   },
-
+  timestamp: {
+    fontSize: 10,
+    marginTop: 4,
+  },
   systemMessage: {
     alignSelf: "center",
     paddingHorizontal: 12,
@@ -352,30 +367,28 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     marginBottom: 10,
   },
-
-  systemText: { fontSize: 12, color: "#666" },
-
+  systemText: { fontSize: 12 },
   inputRow: {
     flexDirection: "row",
     padding: 10,
     borderTopWidth: 1,
+    alignItems: 'center',
   },
-
   input: {
     flex: 1,
     borderWidth: 1,
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
+    minHeight: 40,
   },
-
   sendBtn: {
     marginLeft: 10,
     paddingHorizontal: 20,
+    height: 40,
     borderRadius: 20,
     justifyContent: "center",
   },
-
   sendText: {
     fontWeight: "bold",
   },

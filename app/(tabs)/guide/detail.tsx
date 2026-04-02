@@ -159,24 +159,35 @@ export default function GuideDetail() {
           </View>
 
           {/* STAR RATING */}
-          <View style={styles.ratingContainer}>
-            <Text style={[styles.rateTitle, { color: themeColors.text }]}>
-              {t("rateGuide") || "Rate this guide"}
-            </Text>
+            <View style={styles.ratingContainer}>
+              <Text style={[styles.rateTitle, { color: themeColors.text }]}>
+                {t("rateGuide") || "Rate this guide"}
+              </Text>
 
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity
-                  key={star}
-                  onPress={() => submitRating(star)}
-                >
-                  <Text style={styles.star}>
-                    {star <= selectedRating ? "⭐" : "☆"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              <View style={styles.starsRow}>
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const isSelected = star <= selectedRating;
+
+                  return (
+                    <TouchableOpacity
+                      key={star}
+                      onPress={() => submitRating(star)}
+                    >
+                      <Text
+                        style={[
+                          styles.star,
+                          {
+                            color: isSelected ? "#FFC107" : "#9CA3AF",
+                          },
+                        ]}
+                      >
+                        ★
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
-          </View>
 
           {/* Tourism License */}
           <View

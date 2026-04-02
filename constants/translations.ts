@@ -9,7 +9,7 @@ export const translations = {
     addPost: "Add Post",
     noPosts: "No posts yet",
     welcome: "Welcome to Locora ",
-    tagline: "Wander • Explore • Discover",
+    tagline: "Location • Explore • Aura",
 
     oldPassword: "Old Password",
     newPassword: "New Password",
@@ -442,7 +442,7 @@ somethingWrong: "Something went wrong",
     addPost: "पोस्ट जोड़ें",
     noPosts: "अभी तक कोई पोस्ट नहीं",
     welcome: "लोकॉरा में आपका स्वागत है ",
-    tagline: "घूमें • खोजें • खोज करें",
+    tagline: "लोकेशन • खोज • आभा",
 
     oldPassword: "पुराना पासवर्ड",
     newPassword: "नया पासवर्ड",

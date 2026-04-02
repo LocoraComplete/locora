@@ -6,13 +6,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
-  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { API_BASE_URL } from "../../../config/api";
@@ -290,7 +289,7 @@ export default function ExploreScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <View style={styles.header}>
         <Text style={[styles.logo, { color: themeColors.text }]}>
-          Locora
+          LOCORA
         </Text>
       </View>
 
@@ -473,11 +472,9 @@ const styles = StyleSheet.create({
     borderBottomColor: "rgba(0,0,0,0.05)",
   },
   logo: {
-    fontSize: 32,
+    fontSize: 35,
     fontWeight: "700",
-    fontFamily: Platform.OS === "ios" ? "Snell Roundhand" : "serif",
-    fontStyle: "italic",
-    letterSpacing: 1.5,
+    letterSpacing: 0.5,
   },
   container: { flex: 1, padding: 16 },
   searchBar: {

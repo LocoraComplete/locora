@@ -24,9 +24,11 @@ export default function Index() {
           if (user && rememberMe === "true") {
             router.replace("/(tabs)/explore");
           } else {
+            await AsyncStorage.removeItem("user");
             router.replace("/(auth)/login");
           }
-        } }catch {
+        }
+      } catch {
         router.replace("/(auth)/login");
       }
     }, 2500);

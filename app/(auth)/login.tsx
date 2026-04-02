@@ -76,12 +76,12 @@ export default function Login() {
 
       console.log("✅ Login response:", res.data);
 
+      await AsyncStorage.setItem("user", JSON.stringify(res.data));
+
       if (rememberMe) {
-        await AsyncStorage.setItem("user", JSON.stringify(res.data));
         await AsyncStorage.setItem("rememberMe", "true");
       } else {
-        await AsyncStorage.removeItem("user");
-        await AsyncStorage.removeItem("rememberMe");
+        await AsyncStorage.setItem("rememberMe", "false");
       }
 
       requestLocationPermission();

@@ -7,6 +7,7 @@ import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   FlatList,
   Image,
   StyleSheet,
@@ -19,6 +20,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../config/api";
 import { useLanguage } from "../context/languagecontext";
 
+const SCREEN_WIDTH = Dimensions.get("window").width;
+
 export default function AddPost() {
   const router = useRouter();
   const { t } = useLanguage();
@@ -27,10 +30,8 @@ export default function AddPost() {
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
 
-
   // ================= PICK MULTIPLE IMAGES =================
   const pickImage = async () => {
-
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
@@ -38,15 +39,13 @@ export default function AddPost() {
         Alert.alert(t("permissionRequired"));
         return;
       }
-      
-      // CRITICAL: Using the most compatible settings for Android APKs
+
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use the Enum, not a string array
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: true,
-        quality: 0.7, // Lower quality slightly to reduce memory pressure in APK
+        quality: 0.7,
         selectionLimit: 10,
       });
-
 
       if (result.canceled) {
         return;
@@ -54,21 +53,15 @@ export default function AddPost() {
 
       if (result.assets && result.assets.length > 0) {
         const uris = result.assets.map((asset) => asset.uri);
-        
-        // Log the first URI to see the format (content:// vs file://)
         setImages(uris);
-      } else {
-        return;
       }
-
     } catch (error: any) {
       console.error(error);
     }
   };
 
   // ================= CREATE POST =================
-const handlePost = async () => {
-
+  const handlePost = async () => {
     if (images.length === 0) {
       Alert.alert(t("selectImageFirst"));
       return;
@@ -91,11 +84,9 @@ const handlePost = async () => {
       for (let i = 0; i < images.length; i++) {
         let imgUri = images[i];
 
-        // 1. FORCIBLY COPY TO CACHE (Fixes content:// provider issues in APK)
         const filename = `upload-${Date.now()}-${i}.jpg`;
         const newPath = FileSystem.cacheDirectory + filename;
 
-        
         await FileSystem.copyAsync({
           from: imgUri,
           to: newPath,
@@ -108,16 +99,14 @@ const handlePost = async () => {
           name: filename,
           type: "image/jpeg",
         } as any);
-        
       }
 
-
-      const response = await api.post("/api/posts/create", formData, {
+      await api.post("/api/posts/create", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       Alert.alert(t("postCreated"));
       router.push("/(tabs)/profile");
     } catch (err: any) {
@@ -130,7 +119,6 @@ const handlePost = async () => {
 
   return (
     <SafeAreaView style={styles.container}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
@@ -147,17 +135,18 @@ const handlePost = async () => {
         onPress={pickImage}
       >
         {images.length > 0 ? (
-          <View style={{ flex: 1 }}>
-            <FlatList
-              data={images}
-              horizontal
-              pagingEnabled
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
+          <FlatList
+            data={images}
+            horizontal
+            pagingEnabled
+            keyExtractor={(item, index) => index.toString()}
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <View style={styles.imageSlide}>
                 <Image source={{ uri: item }} style={styles.image} />
-              )}
-            />
-          </View>
+              </View>
+            )}
+          />
         ) : (
           <View style={styles.placeholder}>
             <Ionicons
@@ -228,8 +217,14 @@ const styles = StyleSheet.create({
 
   imageContainer: {
     flex: 1,
+    width: "100%",
     justifyContent: "center",
     alignItems: "center",
+  },
+
+  imageSlide: {
+    width: SCREEN_WIDTH,
+    height: "100%",
   },
 
   image: {
