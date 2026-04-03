@@ -7,7 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "locora",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "newArchEnabled": true,
     "extra": {
       "apiUrl": "https://locora-backend.onrender.com",
       "router": {},
