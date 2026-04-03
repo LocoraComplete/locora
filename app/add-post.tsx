@@ -10,7 +10,10 @@ import {
   Dimensions,
   FlatList,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -45,7 +48,7 @@ export default function AddPost() {
   const [searchPlace, setSearchPlace] = useState("");
   const [places, setPlaces] = useState<any[]>([]);
   const [selectedPlace, setSelectedPlace] =
-  useState<SelectedPlaceType | null>(null);
+    useState<SelectedPlaceType | null>(null);
 
   // ================= FETCH PLACES + FOOD =================
   useEffect(() => {
@@ -109,7 +112,7 @@ export default function AddPost() {
     params.customPlaceName,
     params.customAddress,
   ]);
-  
+
   useEffect(() => {
     const restoreDraft = async () => {
       const draft = await AsyncStorage.getItem("addPostDraft");
@@ -268,55 +271,86 @@ export default function AddPost() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={28} />
-        </TouchableOpacity>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="close" size={28} />
+          </TouchableOpacity>
 
-        <Text style={styles.title}>{t("newPost")}</Text>
-        <View style={{ width: 28 }} />
-      </View>
+          <Text style={styles.title}>{t("newPost")}</Text>
+          <View style={{ width: 28 }} />
+        </View>
 
-      {/* IMAGE PICKER */}
-      <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
-        {images.length > 0 ? (
-          <FlatList
-            data={images}
-            horizontal
-            pagingEnabled
-            keyExtractor={(item, index) => index.toString()}
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <View style={styles.imageSlide}>
-                <Image source={{ uri: item }} style={styles.image} />
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }} 
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* IMAGE PICKER */}
+          <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
+            {images.length > 0 ? (
+              <FlatList
+                data={images}
+                horizontal
+                pagingEnabled
+                keyExtractor={(item, index) => index.toString()}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <View style={styles.imageSlide}>
+                    <Image source={{ uri: item }} style={styles.image} />
+                  </View>
+                )}
+              />
+            ) : (
+              <View style={styles.placeholder}>
+                <Ionicons name="image-outline" size={80} color="#aaa" />
+                <Text style={styles.selectText}>{t("tapToSelectImage")}</Text>
               </View>
             )}
+          </TouchableOpacity>
+
+          {/* CAPTION */}
+          <TextInput
+            placeholder="Write a caption..."
+            value={caption}
+            onChangeText={setCaption}
+            style={styles.captionInput}
+            multiline
           />
-        ) : (
-          <View style={styles.placeholder}>
-            <Ionicons name="image-outline" size={80} color="#aaa" />
-            <Text style={styles.selectText}>{t("tapToSelectImage")}</Text>
+
+          {/* LOCATION DROPDOWN */}
+          <TouchableOpacity
+            style={styles.locationBox}
+            onPress={() => setLocationModal(true)}
+          >
+            <Text>{selectedPlace?.PlaceName || "Tag place"}</Text>
+          </TouchableOpacity>
+
+          {/* SHARE BUTTON */}
+          <View style={styles.bottomContainer}>
+            <TouchableOpacity
+              style={[
+                styles.shareButton,
+                {
+                  backgroundColor: images.length > 0 ? "#0095f6" : "#ccc",
+                },
+              ]}
+              onPress={handlePost}
+              disabled={images.length === 0 || loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.shareText}>{t("share")}</Text>
+              )}
+            </TouchableOpacity>
           </View>
-        )}
-      </TouchableOpacity>
-
-      {/* CAPTION */}
-      <TextInput
-        placeholder="Write a caption..."
-        value={caption}
-        onChangeText={setCaption}
-        style={styles.captionInput}
-        multiline
-      />
-
-      {/* LOCATION DROPDOWN */}
-      <TouchableOpacity
-        style={styles.locationBox}
-        onPress={() => setLocationModal(true)}
-      >
-        <Text>{selectedPlace?.PlaceName || "Tag place"}</Text>
-      </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* LOCATION MODAL */}
       <Modal visible={locationModal} animationType="slide">
@@ -351,26 +385,6 @@ export default function AddPost() {
           </TouchableOpacity>
         </SafeAreaView>
       </Modal>
-
-      {/* SHARE BUTTON */}
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity
-          style={[
-            styles.shareButton,
-            {
-              backgroundColor: images.length > 0 ? "#0095f6" : "#ccc",
-            },
-          ]}
-          onPress={handlePost}
-          disabled={images.length === 0 || loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.shareText}>{t("share")}</Text>
-          )}
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -397,7 +411,7 @@ const styles = StyleSheet.create({
   },
 
   imageContainer: {
-    flex: 1,
+    height: 300, // Fixed height so it doesn't vanish in ScrollView
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
@@ -430,7 +444,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 8,
     margin: 16,
-    minHeight: 60,
+    minHeight: 100, // Increased height for better visibility
     textAlignVertical: "top",
   },
 
@@ -467,6 +481,7 @@ const styles = StyleSheet.create({
 
   bottomContainer: {
     padding: 16,
+    marginTop: 'auto', // Pushes button down
   },
 
   shareButton: {
