@@ -2,14 +2,15 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TextInput,
@@ -22,6 +23,14 @@ import { useLanguage } from "../context/languagecontext";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
+type SelectedPlaceType = {
+  PlaceId: string;
+  PlaceName: string;
+  Latitude: number;
+  Longitude: number;
+  Address: string;
+};
+
 export default function AddPost() {
   const router = useRouter();
   const { t } = useLanguage();
@@ -29,6 +38,101 @@ export default function AddPost() {
   const [images, setImages] = useState<string[]>([]);
   const [caption, setCaption] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ================= NEW STATES =================
+  const params = useLocalSearchParams();
+  const [locationModal, setLocationModal] = useState(false);
+  const [searchPlace, setSearchPlace] = useState("");
+  const [places, setPlaces] = useState<any[]>([]);
+  const [selectedPlace, setSelectedPlace] =
+  useState<SelectedPlaceType | null>(null);
+
+  // ================= FETCH PLACES + FOOD =================
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const [placesRes, foodRes] = await Promise.all([
+          api.get("/api/places"),
+          api.get("/api/food"),
+        ]);
+
+        const merged = [
+          {
+            PlaceId: "other",
+            Name: "Other",
+            isOther: true,
+          },
+          ...(placesRes.data || []),
+          ...(foodRes.data || []),
+        ];
+
+        setPlaces(merged);
+      } catch (error) {
+        console.log("LOCATION FETCH ERROR:", error);
+      }
+    };
+
+    fetchLocations();
+  }, []);
+
+  useEffect(() => {
+    if (!params.customLatitude || !params.customLongitude) return;
+
+    const customPlaceName = Array.isArray(params.customPlaceName)
+      ? params.customPlaceName[0]
+      : params.customPlaceName;
+
+    const customAddress = Array.isArray(params.customAddress)
+      ? params.customAddress[0]
+      : params.customAddress;
+
+    const nextPlace: SelectedPlaceType = {
+      PlaceId: "custom",
+      PlaceName: customPlaceName || "Hidden Spot",
+      Latitude: Number(params.customLatitude),
+      Longitude: Number(params.customLongitude),
+      Address: customAddress || "",
+    };
+
+    setSelectedPlace((prev: SelectedPlaceType | null) => {
+      if (
+        prev?.Latitude === nextPlace.Latitude &&
+        prev?.Longitude === nextPlace.Longitude
+      ) {
+        return prev;
+      }
+      return nextPlace;
+    });
+  }, [
+    params.customLatitude,
+    params.customLongitude,
+    params.customPlaceName,
+    params.customAddress,
+  ]);
+  
+  useEffect(() => {
+    const restoreDraft = async () => {
+      const draft = await AsyncStorage.getItem("addPostDraft");
+      if (!draft) return;
+
+      const parsed = JSON.parse(draft);
+
+      if (parsed.images) setImages(parsed.images);
+      if (parsed.caption) setCaption(parsed.caption);
+      if (parsed.selectedPlace) setSelectedPlace(parsed.selectedPlace);
+    };
+
+    restoreDraft();
+  }, []);
+
+  // ================= FILTERED DROPDOWN =================
+  const filteredPlaces = useMemo(() => {
+    if (!searchPlace.trim()) return places;
+
+    return places.filter((item) =>
+      item.Name?.toLowerCase().includes(searchPlace.toLowerCase())
+    );
+  }, [places, searchPlace]);
 
   // ================= PICK MULTIPLE IMAGES =================
   const pickImage = async () => {
@@ -60,6 +164,37 @@ export default function AddPost() {
     }
   };
 
+  // ============== SAVE DRAFT ====================
+  const saveDraft = async () => {
+    await AsyncStorage.setItem(
+      "addPostDraft",
+      JSON.stringify({
+        images,
+        caption,
+        selectedPlace,
+      })
+    );
+  };
+
+  // ================= SELECT PLACE =================
+  const handleSelectPlace = (item: any) => {
+    setLocationModal(false);
+
+    if (item.isOther) {
+      saveDraft();
+      router.push("/map-picker");
+      return;
+    }
+
+    setSelectedPlace({
+      PlaceId: item.PlaceId || item.FoodId,
+      PlaceName: item.Name,
+      Latitude: item.Latitude,
+      Longitude: item.Longitude,
+      Address: item.Location || "",
+    });
+  };
+
   // ================= CREATE POST =================
   const handlePost = async () => {
     if (images.length === 0) {
@@ -80,6 +215,19 @@ export default function AddPost() {
 
       formData.append("UserId", parsedUser.UserId);
       formData.append("Caption", caption);
+
+      // ================= LOCATION DATA =================
+      formData.append("PlaceId", selectedPlace?.PlaceId || "");
+      formData.append("PlaceName", selectedPlace?.PlaceName || "");
+      formData.append(
+        "Latitude",
+        selectedPlace?.Latitude?.toString() || ""
+      );
+      formData.append(
+        "Longitude",
+        selectedPlace?.Longitude?.toString() || ""
+      );
+      formData.append("Address", selectedPlace?.Address || "");
 
       for (let i = 0; i < images.length; i++) {
         let imgUri = images[i];
@@ -107,6 +255,7 @@ export default function AddPost() {
         },
       });
 
+      await AsyncStorage.removeItem("addPostDraft");
       Alert.alert(t("postCreated"));
       router.push("/(tabs)/profile");
     } catch (err: any) {
@@ -130,10 +279,7 @@ export default function AddPost() {
       </View>
 
       {/* IMAGE PICKER */}
-      <TouchableOpacity
-        style={styles.imageContainer}
-        onPress={pickImage}
-      >
+      <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
         {images.length > 0 ? (
           <FlatList
             data={images}
@@ -149,14 +295,8 @@ export default function AddPost() {
           />
         ) : (
           <View style={styles.placeholder}>
-            <Ionicons
-              name="image-outline"
-              size={80}
-              color="#aaa"
-            />
-            <Text style={styles.selectText}>
-              {t("tapToSelectImage")}
-            </Text>
+            <Ionicons name="image-outline" size={80} color="#aaa" />
+            <Text style={styles.selectText}>{t("tapToSelectImage")}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -170,14 +310,55 @@ export default function AddPost() {
         multiline
       />
 
+      {/* LOCATION DROPDOWN */}
+      <TouchableOpacity
+        style={styles.locationBox}
+        onPress={() => setLocationModal(true)}
+      >
+        <Text>{selectedPlace?.PlaceName || "Tag place"}</Text>
+      </TouchableOpacity>
+
+      {/* LOCATION MODAL */}
+      <Modal visible={locationModal} animationType="slide">
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+          <TextInput
+            placeholder="Search place..."
+            value={searchPlace}
+            onChangeText={setSearchPlace}
+            style={styles.searchInput}
+          />
+
+          <FlatList
+            data={filteredPlaces}
+            keyExtractor={(item, index) =>
+              `${item.PlaceId || item.FoodId || item.Name}-${index}`
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.placeItem}
+                onPress={() => handleSelectPlace(item)}
+              >
+                <Text>{item.Name}</Text>
+              </TouchableOpacity>
+            )}
+          />
+
+          <TouchableOpacity
+            style={styles.closeModal}
+            onPress={() => setLocationModal(false)}
+          >
+            <Text style={{ color: "#fff" }}>Close</Text>
+          </TouchableOpacity>
+        </SafeAreaView>
+      </Modal>
+
       {/* SHARE BUTTON */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity
           style={[
             styles.shareButton,
             {
-              backgroundColor:
-                images.length > 0 ? "#0095f6" : "#ccc",
+              backgroundColor: images.length > 0 ? "#0095f6" : "#ccc",
             },
           ]}
           onPress={handlePost}
@@ -251,6 +432,37 @@ const styles = StyleSheet.create({
     margin: 16,
     minHeight: 60,
     textAlignVertical: "top",
+  },
+
+  locationBox: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+  },
+
+  searchInput: {
+    margin: 16,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+  },
+
+  placeItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+
+  closeModal: {
+    margin: 16,
+    backgroundColor: "#0095f6",
+    padding: 14,
+    borderRadius: 8,
+    alignItems: "center",
   },
 
   bottomContainer: {

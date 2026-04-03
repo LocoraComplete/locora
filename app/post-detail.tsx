@@ -143,10 +143,12 @@ export default function PostDetail() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.background }}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
       >
         <FlatList
+          keyboardShouldPersistTaps="handled"
           ListHeaderComponent={
             <>
               {userId === postOwnerId && (
@@ -166,7 +168,6 @@ export default function PostDetail() {
               <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
                 <Text style={{ fontSize: 15, color: themeColors.text }}>{caption}</Text>
                 
-                {/* LIKES AND TIMESTAMP ROW */}
                 <View style={styles.infoRow}>
                   <TouchableOpacity onPress={handleLike}>
                     <Text style={[styles.likeText, { color: themeColors.text }]}>
@@ -204,15 +205,16 @@ export default function PostDetail() {
           )}
         />
 
-        <View style={[styles.commentInputRow, { borderTopColor: themeColors.border }]}>
+        <View style={[styles.commentInputRow, { borderTopColor: themeColors.border, backgroundColor: themeColors.background }]}>
           <TextInput
-            style={[styles.input, { backgroundColor: themeColors.inputBg, color: themeColors.text }]}
+            style={[styles.input, { backgroundColor: themeColors.inputBg, color: themeColors.text, borderColor: themeColors.border, borderWidth: 1 }]}
             placeholder="Add comment..."
             placeholderTextColor={themeColors.secondaryText}
             value={text}
             onChangeText={setText}
+            multiline={false}
           />
-          <TouchableOpacity onPress={addComment}>
+          <TouchableOpacity onPress={addComment} style={styles.postBtnContainer}>
             <Text style={[styles.postBtn, { color: "#007AFF" }]}>Post</Text>
           </TouchableOpacity>
         </View>
@@ -232,8 +234,15 @@ const styles = StyleSheet.create({
   likeText: { fontSize: 16, fontWeight: "600" },
   comment: { paddingHorizontal: 12, paddingVertical: 8 },
   handle: { fontWeight: "700" },
-  commentInputRow: { flexDirection: "row", borderTopWidth: 1, padding: 8 },
-  input: { flex: 1, paddingHorizontal: 10, borderRadius: 10 },
+  commentInputRow: { 
+    flexDirection: "row", 
+    borderTopWidth: 1, 
+    padding: 12, // Increased padding
+    paddingBottom: Platform.OS === 'ios' ? 10 : 12, // Added extra padding for bottom bar
+    alignItems: 'center' 
+  },
+  input: { flex: 1, paddingHorizontal: 10, borderRadius: 10, minHeight: 40 },
+  postBtnContainer: { justifyContent: 'center', height: 40 },
   postBtn: { fontWeight: "700", marginLeft: 8 },
   timeText: { fontSize: 12, textTransform: "uppercase" },
 });
