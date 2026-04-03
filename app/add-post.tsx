@@ -48,7 +48,7 @@ export default function AddPost() {
   const [searchPlace, setSearchPlace] = useState("");
   const [places, setPlaces] = useState<any[]>([]);
   const [selectedPlace, setSelectedPlace] =
-    useState<SelectedPlaceType | null>(null);
+  useState<SelectedPlaceType | null>(null);
 
   // ================= FETCH PLACES + FOOD =================
   useEffect(() => {
@@ -112,7 +112,7 @@ export default function AddPost() {
     params.customPlaceName,
     params.customAddress,
   ]);
-
+  
   useEffect(() => {
     const restoreDraft = async () => {
       const draft = await AsyncStorage.getItem("addPostDraft");
@@ -274,6 +274,7 @@ export default function AddPost() {
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
         {/* HEADER */}
         <View style={styles.header}>
@@ -285,11 +286,7 @@ export default function AddPost() {
           <View style={{ width: 28 }} />
         </View>
 
-        <ScrollView 
-          contentContainerStyle={{ flexGrow: 1 }} 
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
           {/* IMAGE PICKER */}
           <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
             {images.length > 0 ? (
@@ -329,27 +326,27 @@ export default function AddPost() {
           >
             <Text>{selectedPlace?.PlaceName || "Tag place"}</Text>
           </TouchableOpacity>
-
-          {/* SHARE BUTTON */}
-          <View style={styles.bottomContainer}>
-            <TouchableOpacity
-              style={[
-                styles.shareButton,
-                {
-                  backgroundColor: images.length > 0 ? "#0095f6" : "#ccc",
-                },
-              ]}
-              onPress={handlePost}
-              disabled={images.length === 0 || loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.shareText}>{t("share")}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
         </ScrollView>
+
+        {/* SHARE BUTTON */}
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity
+            style={[
+              styles.shareButton,
+              {
+                backgroundColor: images.length > 0 ? "#0095f6" : "#ccc",
+              },
+            ]}
+            onPress={handlePost}
+            disabled={images.length === 0 || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.shareText}>{t("share")}</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
 
       {/* LOCATION MODAL */}
@@ -411,7 +408,7 @@ const styles = StyleSheet.create({
   },
 
   imageContainer: {
-    height: 300, // Fixed height so it doesn't vanish in ScrollView
+    height: 300, // Fixed height instead of flex: 1 to behave inside ScrollView
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
@@ -444,13 +441,13 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderRadius: 8,
     margin: 16,
-    minHeight: 100, // Increased height for better visibility
+    minHeight: 100, // Slightly taller for easier typing
     textAlignVertical: "top",
   },
 
   locationBox: {
     marginHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 20,
     padding: 14,
     borderWidth: 1,
     borderColor: "#ddd",
@@ -481,7 +478,7 @@ const styles = StyleSheet.create({
 
   bottomContainer: {
     padding: 16,
-    marginTop: 'auto', // Pushes button down
+    backgroundColor: "#fff",
   },
 
   shareButton: {
