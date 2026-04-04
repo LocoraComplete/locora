@@ -143,7 +143,9 @@ export default function ChatList() {
       const res = await axios.get(
         `${API_BASE_URL}/api/chat/recommend/${currentUserId}`
       );
-      setRecommended(res.data);
+      setRecommended(
+        (res.data || []).filter((chat: Chat) => chat.ChatType === "group")
+      );
     } catch (err) {
       console.log(err);
     }

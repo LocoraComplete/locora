@@ -57,7 +57,6 @@ export default function Room() {
     });
   };
 
-  /* LOAD USER */
   useEffect(() => {
     const loadUser = async () => {
       const userString = await AsyncStorage.getItem("user");
@@ -76,7 +75,6 @@ export default function Room() {
     loadUser();
   }, []);
 
-  /* LOAD MESSAGES */
   const loadMessages = async () => {
     if (!CHAT_ID || !USER_ID) return;
 
@@ -100,12 +98,10 @@ export default function Room() {
     }
   };
 
-  /* SOCKET LISTENER */
   useEffect(() => {
     if (!CHAT_ID || !USER_ID) return;
 
     loadMessages();
-
     socket.emit("join_chat", CHAT_ID);
 
     const handleReceive = (message: any) => {
@@ -123,7 +119,6 @@ export default function Room() {
     };
   }, [CHAT_ID, USER_ID]);
 
-  /* SEND MESSAGE */
   const sendMessage = () => {
     if (!inputText.trim() || !CHAT_ID || !USER_ID) return;
 
@@ -138,7 +133,6 @@ export default function Room() {
     setInputText("");
   };
 
-  /* OPEN GROUP INFO */
   const openGroupInfo = () => {
     if (!CHAT_ID || isPrivate === "true") return;
 
@@ -148,17 +142,26 @@ export default function Room() {
     });
   };
 
+  const Wrapper = Platform.OS === "ios" ? KeyboardAvoidingView : View;
+
   return (
-    <KeyboardAvoidingView
+    <Wrapper
       style={{ flex: 1, backgroundColor: themeColors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : "padding"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      {...(Platform.OS === "ios"
+        ? {
+            behavior: "padding",
+            keyboardVerticalOffset: 90,
+          }
+        : {})}
     >
       {/* HEADER */}
       <View
         style={[
           styles.header,
-          { borderColor: themeColors.border, backgroundColor: themeColors.background },
+          {
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.background,
+          },
         ]}
       >
         <Pressable onPress={() => router.back()} style={{ marginRight: 10 }}>
@@ -177,12 +180,7 @@ export default function Room() {
                 }
               }}
             >
-              <Text
-                style={[
-                  styles.headerTitle,
-                  { color: themeColors.text },
-                ]}
-              >
+              <Text style={[styles.headerTitle, { color: themeColors.text }]}>
                 {otherUserHandle}
               </Text>
               <Text
@@ -196,12 +194,7 @@ export default function Room() {
             </Pressable>
           ) : (
             <TouchableOpacity onPress={openGroupInfo}>
-              <Text
-                style={[
-                  styles.headerTitle,
-                  { color: themeColors.text },
-                ]}
-              >
+              <Text style={[styles.headerTitle, { color: themeColors.text }]}>
                 {title}
               </Text>
               <Text
@@ -221,9 +214,14 @@ export default function Room() {
       <ScrollView
         ref={scrollRef}
         style={styles.messages}
-        contentContainerStyle={{ paddingVertical: 10 }}
+        contentContainerStyle={{
+          paddingVertical: 10,
+          paddingBottom: 20,
+        }}
         keyboardShouldPersistTaps="handled"
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() =>
+          scrollRef.current?.scrollToEnd({ animated: true })
+        }
       >
         {messages.map((msg, index) => {
           if (msg.IsSystem) {
@@ -293,7 +291,10 @@ export default function Room() {
       <View
         style={[
           styles.inputRow,
-          { borderColor: themeColors.border, backgroundColor: themeColors.background },
+          {
+            borderColor: themeColors.border,
+            backgroundColor: themeColors.background,
+          },
         ]}
       >
         <TextInput
@@ -309,7 +310,6 @@ export default function Room() {
           placeholderTextColor={theme === "dark" ? "#999" : "#666"}
           value={inputText}
           onChangeText={setInputText}
-          multiline={false}
         />
 
         <TouchableOpacity
@@ -321,11 +321,9 @@ export default function Room() {
           </Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </Wrapper>
   );
 }
-
-/* STYLES */
 
 const styles = StyleSheet.create({
   header: {
@@ -372,7 +370,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 10,
     borderTopWidth: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   input: {
     flex: 1,
