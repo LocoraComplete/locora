@@ -5,6 +5,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -47,7 +48,6 @@ export default function Community() {
 
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
-  // ================= GET USER LOCATION =================
   useEffect(() => {
     const getLocation = async () => {
       try {
@@ -72,7 +72,6 @@ export default function Community() {
     getLocation();
   }, []);
 
-  // ================= LOAD USER =================
   useEffect(() => {
     const loadUser = async () => {
       const storedUser = await AsyncStorage.getItem("user");
@@ -84,7 +83,6 @@ export default function Community() {
     loadUser();
   }, []);
 
-  // ================= FETCH POSTS =================
   useEffect(() => {
     if (userId) fetchPosts(1, true);
   }, [userId]);
@@ -150,7 +148,50 @@ export default function Community() {
     }
   };
 
-  // ================= DISTANCE CALCULATOR =================
+  const sendReport = async (post: any, reason: string) => {
+    try {
+      if (!userId) return;
+
+      await api.post("/api/posts/report", {
+        PostId: post.PostId,
+        ReportedBy: userId,
+        PostOwnerId: post.UserId,
+        reason,
+      });
+
+      Alert.alert("Report submitted successfully");
+    } catch (err: any) {
+      Alert.alert(
+        err?.response?.data?.message || "Failed to report post"
+      );
+    }
+  };
+
+  const openReportMenu = (post: any) => {
+    Alert.alert("Report Post", "Why are you reporting this post?", [
+      {
+        text: "Spam / Fake",
+        onPress: () => sendReport(post, "Spam / Fake"),
+      },
+      {
+        text: "Inappropriate",
+        onPress: () => sendReport(post, "Inappropriate"),
+      },
+      {
+        text: "Hate Speech",
+        onPress: () => sendReport(post, "Hate Speech"),
+      },
+      {
+        text: "Scam / Misleading",
+        onPress: () => sendReport(post, "Scam / Misleading"),
+      },
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+    ]);
+  };
+
   const calculateDistance = (
     lat1: number,
     lon1: number,
@@ -174,7 +215,6 @@ export default function Community() {
     return (R * c).toFixed(1);
   };
 
-  // ================= OPEN MAP =================
   const openDirections = (post: any) => {
     if (!post?.Latitude || !post?.Longitude) return;
 
@@ -218,6 +258,10 @@ export default function Community() {
               {item.handle}
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => openReportMenu(item)}>
+            <Text style={{ fontSize: 22, color: themeColors.text }}>⋮</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Post Image */}
@@ -260,14 +304,12 @@ export default function Community() {
           </View>
         )}
 
-        {/* CAPTION */}
         {!!item.Caption && (
           <Text style={[styles.caption, { color: themeColors.text }]}>
             {item.Caption}
           </Text>
         )}
 
-        {/* LOCATION + DISTANCE */}
         {!!item.PlaceName && item.Latitude && item.Longitude && (
           <TouchableOpacity
             onPress={() => openDirections(item)}
@@ -280,7 +322,6 @@ export default function Community() {
           </TouchableOpacity>
         )}
 
-        {/* Actions */}
         <View style={styles.actions}>
           <TouchableOpacity
             onPress={() => toggleLike(item.PostId)}
@@ -324,7 +365,6 @@ export default function Community() {
         { backgroundColor: themeColors.background },
       ]}
     >
-      {/* Search */}
       <View
         style={[
           styles.searchContainer,
@@ -396,6 +436,7 @@ const styles = StyleSheet.create({
     padding: 10,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   userRow: { flexDirection: "row", alignItems: "center" },
   avatar: {
@@ -406,23 +447,19 @@ const styles = StyleSheet.create({
   },
   username: { fontWeight: "bold", fontSize: 14 },
   postImage: { width: "100%", height: 300 },
-
   caption: {
     paddingHorizontal: 10,
     paddingTop: 10,
     fontSize: 14,
   },
-
   locationRow: {
     paddingHorizontal: 10,
     paddingTop: 8,
   },
-
   locationText: {
     fontSize: 13,
     fontWeight: "500",
   },
-
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
