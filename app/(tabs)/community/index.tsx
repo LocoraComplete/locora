@@ -9,6 +9,8 @@ import {
   Dimensions,
   FlatList,
   Image,
+  Modal,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -45,6 +47,10 @@ export default function Community() {
     latitude: number;
     longitude: number;
   } | null>(null);
+
+  // ✅ report modal state
+  const [reportModalVisible, setReportModalVisible] = useState(false);
+  const [selectedPost, setSelectedPost] = useState<any>(null);
 
   const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -168,28 +174,15 @@ export default function Community() {
   };
 
   const openReportMenu = (post: any) => {
-    Alert.alert("Report Post", "Why are you reporting this post?", [
-      {
-        text: "Spam / Fake",
-        onPress: () => sendReport(post, "Spam / Fake"),
-      },
-      {
-        text: "Inappropriate",
-        onPress: () => sendReport(post, "Inappropriate"),
-      },
-      {
-        text: "Hate Speech",
-        onPress: () => sendReport(post, "Hate Speech"),
-      },
-      {
-        text: "Scam / Misleading",
-        onPress: () => sendReport(post, "Scam / Misleading"),
-      },
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
-    ]);
+    setSelectedPost(post);
+    setReportModalVisible(true);
+  };
+
+  const handleReport = (reason: string) => {
+    if (selectedPost) {
+      sendReport(selectedPost, reason);
+    }
+    setReportModalVisible(false);
   };
 
   const calculateDistance = (
@@ -237,7 +230,6 @@ export default function Community() {
 
     return (
       <View style={[styles.card, { backgroundColor: themeColors.card }]}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.userRow}
@@ -259,12 +251,15 @@ export default function Community() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => openReportMenu(item)}>
+          <TouchableOpacity
+            onPress={() => openReportMenu(item)}
+            style={styles.menuButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Text style={{ fontSize: 22, color: themeColors.text }}>⋮</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Post Image */}
         <FlatList
           data={item.ImageUrl}
           horizontal
@@ -286,23 +281,6 @@ export default function Community() {
             />
           )}
         />
-
-        {item.ImageUrl.length > 1 && (
-          <View style={styles.dotsContainer}>
-            {item.ImageUrl.map((_: string, index: number) => {
-              const activeIndex = imageIndexes[item.PostId] || 0;
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    index === activeIndex && styles.activeDot,
-                  ]}
-                />
-              );
-            })}
-          </View>
-        )}
 
         {!!item.Caption && (
           <Text style={[styles.caption, { color: themeColors.text }]}>
@@ -408,6 +386,39 @@ export default function Community() {
           }
         />
       )}
+
+      {/* ✅ Improved Modal (UI consistent) */}
+      <Modal
+        transparent
+        visible={reportModalVisible}
+        animationType="fade"
+        onRequestClose={() => setReportModalVisible(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setReportModalVisible(false)}
+        >
+          <View style={[styles.modalBox, { backgroundColor: themeColors.card }]}>
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>
+              Report Post
+            </Text>
+
+            {["Spam / Fake", "Inappropriate", "Hate Speech", "Scam / Misleading"].map((reason) => (
+              <TouchableOpacity
+                key={reason}
+                onPress={() => handleReport(reason)}
+                style={styles.modalOption}
+              >
+                <Text style={{ color: themeColors.text }}>{reason}</Text>
+              </TouchableOpacity>
+            ))}
+
+            <TouchableOpacity onPress={() => setReportModalVisible(false)}>
+              <Text style={styles.modalCancel}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -469,21 +480,36 @@ const styles = StyleSheet.create({
   likeButton: { flexDirection: "row", alignItems: "center" },
   heart: { fontSize: 18, marginRight: 6 },
   likesText: { fontSize: 14, fontWeight: "600" },
-  dotsContainer: {
-    flexDirection: "row",
+
+  // modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
-    marginTop: 6,
+    alignItems: "center",
   },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#ccc",
-    marginHorizontal: 3,
+  modalBox: {
+    width: "80%",
+    borderRadius: 12,
+    padding: 20,
   },
-  activeDot: {
-    backgroundColor: "#000",
-    width: 7,
-    height: 7,
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalOption: {
+    paddingVertical: 10,
+  },
+  modalCancel: {
+    textAlign: "center",
+    color: "red",
+    marginTop: 10,
+  },
+  menuButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

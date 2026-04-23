@@ -74,8 +74,10 @@ export default function Signup() {
       setLoading(true);
       await api.post("/api/users/register", payload);
 
-      Alert.alert(t("success") || "Success", t("accountCreated") || "Account created!");
-      router.replace("/(auth)/login");
+      router.push({
+        pathname: "/(auth)/verify",
+        params: { email: trimmedEmail },
+      });
     } catch (error: any) {
       console.log("SIGNUP ERROR:", error?.response?.data || error.message);
       Alert.alert(
